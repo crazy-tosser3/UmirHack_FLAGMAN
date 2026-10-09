@@ -1,0 +1,14 @@
+@font-face {
+  font-family: 'Oswald';
+  src: url('/public/fonts/Oswald-VariableFont_wght.ttf');
+}
+
+@font-face {
+  font-family: 'Manrope';
+  src: url('/public/fonts/Manrope-VariableFont_wght.ttf');
+}
+
+@font-face {
+  font-family: 'Golos';
+  src: url('/public/fonts/GolosText-VariableFont_wght.ttf');
+}

@@ -1,0 +1,37 @@
+@import 'tailwindcss';
+@import 'fonts.css';
+
+:root {
+  /* Цвета */
+  --black: #22222b;
+  --white: #fbfbfe;
+  --light-lavender: #dddbff;
+  --lavender: #aba8d6;
+  --orange: #f49b1e;
+  
+  /* Цвета страницы вне зависимости от темы */
+  --accent: var(--orange);
+  --secondary: var(--light-lavender);
+  --primary: var(--lavender);
+
+  /* Для светлой темы */
+  --bg: var(--white);
+  --text: var(--black);
+}
+
+:root[data-theme="dark"] {
+  /* Для темной */
+  --bg: var(--black);
+  --text: var(--white);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+
+  font-family: 'Golos', Arial, Helvetica, sans-serif;
+}
+
+button {
+  cursor: pointer;
+}
