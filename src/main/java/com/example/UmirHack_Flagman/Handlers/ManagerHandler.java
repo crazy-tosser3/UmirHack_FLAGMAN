@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.UmirHack_Flagman.models.AllDeliveryResponse;
 import com.example.UmirHack_Flagman.models.OrderList;
 
-// Расширения из manage.md. Общие эндпоинты склада/заказов — в InventoryHandler
 @RestController
 @RequestMapping("/api/v1/")
 public class ManagerHandler {

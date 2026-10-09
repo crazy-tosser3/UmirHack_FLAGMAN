@@ -125,7 +125,6 @@ public class InventoryHandler {
             @RequestParam(required = false) String reason,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit) {
-        // TODO стоп-лист (reason маппится в StopReasonCode)
         return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
     }
 

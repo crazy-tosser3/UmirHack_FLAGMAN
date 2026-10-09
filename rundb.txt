@@ -1,0 +1,10 @@
+docker run --name UmirHack -p 5432:5432 \
+    -e POSTGRES_DB=UmirFlagman \
+    -e POSTGRES_USER=admin \
+    -e POSTGRES_PASSWORD=123456 \
+    -d postgres
+
+docker exec -it UmirHack psql -U admin -d UmirFlagman
+
+
+docker run --name UmirHackRedis -p 6379:6379 -d redis:7

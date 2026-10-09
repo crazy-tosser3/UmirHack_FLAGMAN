@@ -1,15 +1,29 @@
 package com.example.UmirHack_Flagman.models;
 
+import java.util.UUID;
+
 import lombok.Getter;
 import lombok.Setter;
 
-@Setter 
-@Getter 
+@Setter
+@Getter
 public class ErrorResponse {
     private ErrorBody error;
 
-    @Setter 
-    @Getter 
+    public static ErrorResponse of(String code, String message, Object details) {
+        ErrorBody body = new ErrorBody();
+        body.setCode(code);
+        body.setMessage(message);
+        body.setDetails(details);
+        body.setRequestId("req-" + UUID.randomUUID());
+
+        ErrorResponse response = new ErrorResponse();
+        response.setError(body);
+        return response;
+    }
+
+    @Setter
+    @Getter
     public static class ErrorBody {
         private String code;
         private String message;
