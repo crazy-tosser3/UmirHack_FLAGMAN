@@ -25,7 +25,6 @@ public class AuthService {
     private final UserRepoDB userRepository;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
-    // Хеш для сравнения, когда пользователь не найден: время ответа не выдает наличие аккаунта
     private final String dummyHash;
 
     public AuthService(PasswordEncoder passwordEncoder, UserRepoDB userRepository,
@@ -37,7 +36,6 @@ public class AuthService {
         this.dummyHash = passwordEncoder.encode(UUID.randomUUID().toString());
     }
 
-    // Ответ для клиента + refresh token, который контроллер кладет в cookie
     public record Session<T>(T body, String refreshToken) {
     }
 
@@ -53,7 +51,6 @@ public class AuthService {
         try {
             return toResponse(userRepository.saveAndFlush(newUser));
         } catch (DataIntegrityViolationException e) {
-            // Параллельная регистрация с тем же email
             throw emailExists();
         }
     }
