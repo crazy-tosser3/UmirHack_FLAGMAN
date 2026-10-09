@@ -25,6 +25,31 @@
   --text: var(--white);
 }
 
+@theme {
+  --color-bg: var(--bg);
+  --color-text: var(--text);
+  --color-accent: var(--accent);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  /* Для ошибки */
+  --color-err: #B91C1C;
+  --color-err-bg: #EDC5C5;
+  /* Для предупреждения */
+  --color-warn: #854D0E;
+  --color-warn-bg: #FAEFCF;
+  /* Для успешных операций */
+  --color-success: #166534;
+  --color-success-bg: #D5EBDC;
+
+  --font-oswald: 'Oswald', Arial, Helvetica, sans-serif;
+  --font-manrope: 'Manrope', Arial, Helvetica, sans-serif;
+  --font-golos: 'Golos', Arial, Helvetica, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background-color: var(--bg);
   color: var(--text);
@@ -34,4 +59,19 @@ body {
 
 button {
   cursor: pointer;
+}
+
+.card {
+  border: solid 1px var(--secondary);
+
+}
+
+.content {
+  max-width: 1440px;
+  margin: auto;
+}
+
+*::selection {
+  background-color: var(--accent);
+  color: var(--white);
 }
