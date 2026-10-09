@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +18,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.example.UmirHack_Flagman.Config.AuthInterceptor;
+import com.example.UmirHack_Flagman.Config.Roles;
+import com.example.UmirHack_Flagman.Services.CatalogService;
+import com.example.UmirHack_Flagman.Services.DeliveryService;
+import com.example.UmirHack_Flagman.Services.OffersService;
+import com.example.UmirHack_Flagman.Services.OrderService;
+import com.example.UmirHack_Flagman.Services.SseBroadcaster;
+import com.example.UmirHack_Flagman.Services.StockService;
+import com.example.UmirHack_Flagman.Services.StopListService;
 import com.example.UmirHack_Flagman.models.ConsuptionData;
 import com.example.UmirHack_Flagman.models.CreateOrderData;
 import com.example.UmirHack_Flagman.models.DeliveryData;
@@ -29,9 +39,33 @@ import com.example.UmirHack_Flagman.models.StockBatchesResponse;
 import com.example.UmirHack_Flagman.models.StockResponse;
 import com.example.UmirHack_Flagman.models.StopListResponse;
 
+import jakarta.validation.Valid;
+
+// Каталог, стоп-лист, предложения и заказы доступны всем авторизованным; склад и поставки — manager/admin
 @RestController
 @RequestMapping("/api/v1/")
 public class InventoryHandler {
+    private static final String IDEMPOTENCY_HEADER = "Idempotency-Key";
+
+    private final CatalogService catalogService;
+    private final DeliveryService deliveryService;
+    private final StockService stockService;
+    private final OrderService orderService;
+    private final StopListService stopListService;
+    private final OffersService offersService;
+    private final SseBroadcaster broadcaster;
+
+    public InventoryHandler(CatalogService catalogService, DeliveryService deliveryService, StockService stockService,
+            OrderService orderService, StopListService stopListService, OffersService offersService,
+            SseBroadcaster broadcaster) {
+        this.catalogService = catalogService;
+        this.deliveryService = deliveryService;
+        this.stockService = stockService;
+        this.orderService = orderService;
+        this.stopListService = stopListService;
+        this.offersService = offersService;
+        this.broadcaster = broadcaster;
+    }
 
     // Ингредиенты
 
@@ -40,8 +74,7 @@ public class InventoryHandler {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(required = false) String search) {
-        // TODO каталог ингредиентов
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(catalogService.getIngredients(page, limit, search));
     }
 
     // Блюда
@@ -52,70 +85,74 @@ public class InventoryHandler {
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean active) {
-        // TODO блюда и состав
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(catalogService.getDishes(page, limit, search, active));
     }
 
     // Поставки
 
     @PostMapping("deliveries")
     public ResponseEntity<DeliveryResponse> createDelivery(
-            @RequestBody DeliveryData req,
-            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
-        // TODO регистрация поставки
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @Valid @RequestBody DeliveryData req,
+            @RequestHeader(value = IDEMPOTENCY_HEADER, required = false) String idempotencyKey) {
+        Roles.require(role, Roles.STAFF);
+        return ResponseEntity.status(HttpStatus.CREATED).body(deliveryService.create(req, idempotencyKey));
     }
 
     @GetMapping("deliveries/{deliveryId}")
-    public ResponseEntity<DeliveryResponse> getDeliveryById(@PathVariable UUID deliveryId) {
-        // TODO детали поставки
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    public ResponseEntity<DeliveryResponse> getDeliveryById(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @PathVariable UUID deliveryId) {
+        Roles.require(role, Roles.STAFF);
+        return ResponseEntity.ok(deliveryService.getById(deliveryId));
     }
 
     // Склад
 
     @GetMapping("stock")
     public ResponseEntity<StockResponse> getStock(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
             @RequestParam(required = false) UUID ingredientId,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit) {
-        // TODO сводные остатки
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        Roles.require(role, Roles.STAFF);
+        return ResponseEntity.ok(stockService.getStock(ingredientId, search, page, limit));
     }
 
     // expiryStatus: valid | expiring | expired | all
     @GetMapping("stock/batches")
     public ResponseEntity<StockBatchesResponse> getStockBatches(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
             @RequestParam(required = false) UUID ingredientId,
             @RequestParam(required = false) String expiryStatus,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant expiresBefore,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit) {
-        // TODO остатки и сроки по партиям
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        Roles.require(role, Roles.STAFF);
+        return ResponseEntity.ok(stockService.getBatches(ingredientId, expiryStatus, expiresBefore, page, limit));
     }
 
     // Заказы
 
     @PostMapping("orders")
     public ResponseEntity<OrderData> createOrder(
-            @RequestBody CreateOrderData req,
-            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
-        // TODO создание заказа и FEFO-списание
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+            @Valid @RequestBody CreateOrderData req,
+            @RequestHeader(value = IDEMPOTENCY_HEADER, required = false) String idempotencyKey) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.create(req, idempotencyKey));
     }
 
     @GetMapping("orders/{orderId}")
     public ResponseEntity<OrderData> getOrderById(@PathVariable UUID orderId) {
-        // TODO детали заказа
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(orderService.getById(orderId));
     }
 
     @GetMapping("orders/{orderId}/consumption")
-    public ResponseEntity<ConsuptionData> getOrderConsumption(@PathVariable UUID orderId) {
-        // TODO списание по партиям
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    public ResponseEntity<ConsuptionData> getOrderConsumption(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @PathVariable UUID orderId) {
+        Roles.require(role, Roles.STAFF);
+        return ResponseEntity.ok(orderService.getConsumption(orderId));
     }
 
     // Стоп-лист
@@ -125,7 +162,7 @@ public class InventoryHandler {
             @RequestParam(required = false) String reason,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(stopListService.getStopList(reason, page, limit));
     }
 
     // Горячие предложения
@@ -134,15 +171,13 @@ public class InventoryHandler {
     public ResponseEntity<OffersResponse> getOffers(
             @RequestParam(required = false) Integer limit,
             @RequestParam(required = false) Double minPriority) {
-        // TODO горячие предложения
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(offersService.getOffers(limit, minPriority));
     }
 
-    // SSE
+    // SSE: stock.updated, stop-list.updated, offers.updated, delivery.created, order.confirmed, batch.expiring, batch.expired
 
     @GetMapping(value = "events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseEntity<SseEmitter> events() {
-        // TODO подписка на события
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    public SseEmitter events() {
+        return broadcaster.subscribe();
     }
 }

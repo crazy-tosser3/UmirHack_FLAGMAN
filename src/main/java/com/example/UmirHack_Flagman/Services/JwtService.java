@@ -27,7 +27,6 @@ public class JwtService {
 
     public JwtService(AuthProperties props) {
         this.props = props;
-        // Бросит WeakKeyException, если ключ короче 256 бит
         this.key = Keys.hmacShaKeyFor(props.jwtSigningKey().getBytes(StandardCharsets.UTF_8));
     }
 
@@ -45,7 +44,6 @@ public class JwtService {
                 .compact();
     }
 
-    // Проверяет подпись, exp, iss, aud и алгоритм; при ошибке бросает JwtException
     public Claims parse(String token) {
         Jws<Claims> jws = Jwts.parser()
                 .verifyWith(key)

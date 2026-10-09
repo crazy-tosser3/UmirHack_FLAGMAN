@@ -29,5 +29,7 @@ public class StockBatchesResponse {
         private BigDecimal availableQuantity;
         private Instant expiresAt;
         private BatchStatus expiryStatus;
+        // 0 для просроченной партии
+        private long remainingShelfLifeSeconds;
     }
 }
