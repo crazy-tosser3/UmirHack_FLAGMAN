@@ -8,10 +8,17 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     host: true,
-    // proxy: {
-    //   "/api": "http://localhost:3001",
-    //   "/socket.io": {target: "http://localhost:3001", ws: true}
-    // }
+    // Фронт и API на одном origin: refresh cookie сохраняется и отправляется без CORS
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080",
+        // Для браузера запрос same-origin. Убираем Origin, иначе Spring проверит CORS и вернет 403,
+        // если фронт открыт не с разрешенного адреса (например, по IP из сети при host: true)
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq) => proxyReq.removeHeader("origin"));
+        },
+      },
+    }
   },
   resolve: {
     alias: {

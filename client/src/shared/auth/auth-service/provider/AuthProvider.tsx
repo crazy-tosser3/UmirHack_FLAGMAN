@@ -1,30 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AuthContext } from '../context/auth.context';
-import api from '@lib/api';
+import api, { refreshAccessToken, setAccessToken } from '@lib/api';
+import type { User } from '@lib/types';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // После перезагрузки страницы access token в памяти пуст — восстанавливаем сессию по refresh cookie
   useEffect(() => {
     let isMounted = true;
 
     const checkSession = async () => {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
       try {
+        const token = await refreshAccessToken();
+        if (!token) {
+          return;
+        }
         const response = await api.get('/auth/me');
         if (isMounted) {
           setUser(response.data.user ?? response.data);
         }
       } catch {
         if (isMounted) {
-          localStorage.removeItem('token');
+          setAccessToken(null);
           setUser(null);
         }
       } finally {
@@ -36,10 +35,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => { isMounted = false; };
   }, []);
 
+  // Refresh не удался посреди работы — сессия закончилась, ProtectedRoute отправит на /login
   useEffect(() => {
     const handleLogout = () => {
+      setAccessToken(null);
       setUser(null);
-      window.location.href = '/login';
     };
 
     window.addEventListener('auth:logout', handleLogout);
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const response = await api.post('/auth/login', { email, password });
     const { accessToken, user } = response.data;
 
-    localStorage.setItem('token', accessToken);
+    setAccessToken(accessToken);
     setUser(user);
 
     return response.data;
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await api.post('/auth/logout');
     } finally {
-      localStorage.removeItem('token');
+      setAccessToken(null);
       setUser(null);
     }
   }, []);
