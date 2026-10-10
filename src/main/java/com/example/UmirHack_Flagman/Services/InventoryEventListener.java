@@ -18,7 +18,7 @@ import com.example.UmirHack_Flagman.models.OrderConfirmedEvent;
 import com.example.UmirHack_Flagman.models.StockUpdatedEvent;
 import com.example.UmirHack_Flagman.models.StopListUpdatedEvent;
 
-// Реакция на изменения склада: пересчет стоп-листа и рассылка SSE. Выполняется асинхронно, не задерживая API
+
 @Component
 public class InventoryEventListener {
     private static final Logger log = LoggerFactory.getLogger(InventoryEventListener.class);

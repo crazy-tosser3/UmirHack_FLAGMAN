@@ -41,7 +41,7 @@ import com.example.UmirHack_Flagman.models.StopListResponse;
 
 import jakarta.validation.Valid;
 
-// Каталог, стоп-лист, предложения и заказы доступны всем авторизованным; склад и поставки — manager/admin
+
 @RestController
 @RequestMapping("/api/v1/")
 public class InventoryHandler {

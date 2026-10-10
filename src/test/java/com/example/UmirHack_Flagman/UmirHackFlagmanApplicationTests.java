@@ -1,10 +1,10 @@
 package com.example.UmirHack_Flagman;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class UmirHackFlagmanApplicationTests {
+import com.example.UmirHack_Flagman.support.IntegrationTest;
+
+class UmirHackFlagmanApplicationTests extends IntegrationTest {
 
 	@Test
 	void contextLoads() {

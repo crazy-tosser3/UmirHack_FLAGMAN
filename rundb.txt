@@ -8,3 +8,5 @@ docker exec -it UmirHack psql -U admin -d UmirFlagman
 
 
 docker run --name UmirHackRedis -p 6379:6379 -d redis:7
+
+docker exec -it UmirHackRedis redis-cli

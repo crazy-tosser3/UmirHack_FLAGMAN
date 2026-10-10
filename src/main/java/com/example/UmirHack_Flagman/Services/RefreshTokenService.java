@@ -21,6 +21,7 @@ import com.example.UmirHack_Flagman.Exceptions.ApiException;
 public class RefreshTokenService {
     private static final String TOKEN_KEY = "auth:refresh:";
     private static final String FAMILY_KEY = "auth:family:";
+    private static final String USER_FAMILIES_KEY = "auth:user-families:";
     private static final String F_USER = "userId";
     private static final String F_FAMILY = "familyId";
     private static final String F_USED = "usedAt";
@@ -40,7 +41,18 @@ public class RefreshTokenService {
     public String issue(UUID userId) {
         String familyId = UUID.randomUUID().toString();
         redis.opsForValue().set(FAMILY_KEY + familyId, userId.toString(), props.refreshTtl());
+        redis.opsForSet().add(USER_FAMILIES_KEY + userId, familyId);
+        redis.expire(USER_FAMILIES_KEY + userId, props.refreshTtl());
         return store(userId.toString(), familyId);
+    }
+
+    public void revokeAll(UUID userId) {
+        String key = USER_FAMILIES_KEY + userId;
+        var families = redis.opsForSet().members(key);
+        if (families != null && !families.isEmpty()) {
+            redis.delete(families.stream().map(f -> FAMILY_KEY + f).toList());
+        }
+        redis.delete(key);
     }
 
     public Rotation rotate(String token) {

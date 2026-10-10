@@ -21,14 +21,6 @@ import com.example.UmirHack_Flagman.Entity.StockBatchEntity;
 import com.example.UmirHack_Flagman.Repositories.StockBatchRepoDB;
 import com.example.UmirHack_Flagman.models.OffersResponse;
 
-/*
- * Приоритет блюда = максимум по его ингредиентам из партий, истекающих в пределах горизонта:
- *   urgency     = 1 - hoursLeft / horizon            — чем ближе срок, тем выше
- *   wasteShare  = доля таких партий, которую при текущем расходе не успеют израсходовать
- *   exclusivity = 1 / число блюд с этим ингредиентом — меньше альтернатив, важнее продвигать
- *   score = urgency * (0.4 + 0.6 * wasteShare) * (0.75 + 0.25 * exclusivity), priority = 100 * score
- * Недоступные блюда в рекомендации не попадают.
- */
 @Service
 @Transactional(readOnly = true)
 public class OffersService {

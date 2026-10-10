@@ -8,6 +8,7 @@ import com.example.UmirHack_Flagman.Exceptions.ApiException;
 
 public final class Roles {
     public static final Set<String> STAFF = Set.of("manager", "admin");
+    public static final Set<String> ADMIN = Set.of("admin");
 
     private Roles() {
     }

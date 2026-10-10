@@ -20,7 +20,10 @@ import com.example.UmirHack_Flagman.Config.AuthInterceptor;
 import com.example.UmirHack_Flagman.Config.AuthProperties;
 import com.example.UmirHack_Flagman.Exceptions.ApiException;
 import com.example.UmirHack_Flagman.Services.AuthService;
+import com.example.UmirHack_Flagman.models.AcceptInviteData;
 import com.example.UmirHack_Flagman.models.ErrorResponse;
+import com.example.UmirHack_Flagman.models.InviteInfo;
+import com.example.UmirHack_Flagman.models.InviteToken;
 import com.example.UmirHack_Flagman.models.LoginData;
 import com.example.UmirHack_Flagman.models.LoginResponse;
 import com.example.UmirHack_Flagman.models.RegisterData;
@@ -54,6 +57,20 @@ public class UserHandler {
     @PostMapping("login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginData req) {
         AuthService.Session<LoginResponse> session = authService.loginUser(req);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie(session.refreshToken()).toString())
+                .cacheControl(CacheControl.noStore())
+                .body(session.body());
+    }
+
+    @PostMapping("invite/verify")
+    public ResponseEntity<InviteInfo> verifyInvite(@Valid @RequestBody InviteToken req) {
+        return ResponseEntity.ok(authService.inviteInfo(req.getToken()));
+    }
+
+    @PostMapping("invite/accept")
+    public ResponseEntity<LoginResponse> acceptInvite(@Valid @RequestBody AcceptInviteData req) {
+        AuthService.Session<LoginResponse> session = authService.acceptInvite(req);
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie(session.refreshToken()).toString())
                 .cacheControl(CacheControl.noStore())

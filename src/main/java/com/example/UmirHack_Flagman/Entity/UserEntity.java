@@ -26,7 +26,7 @@ public class UserEntity {
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
@@ -40,6 +40,8 @@ public class UserEntity {
     @Column(nullable = false)
     private Instant createdAt;
 
+    private Instant updatedAt;
+
     protected UserEntity() {
     }
 
@@ -50,6 +52,12 @@ public class UserEntity {
         this.role = Role.EMPLOYEE;
         this.status = UserStatus.ACTIVE;
         this.createdAt = Instant.now();
+        this.updatedAt = this.createdAt;
+    }
+
+    @PreUpdate
+    void touch() {
+        this.updatedAt = Instant.now();
     }
 
 }

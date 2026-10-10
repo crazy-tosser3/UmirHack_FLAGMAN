@@ -10,7 +10,7 @@ import com.example.UmirHack_Flagman.Entity.IdempotencyKeyEntity;
 import com.example.UmirHack_Flagman.Exceptions.ApiException;
 import com.example.UmirHack_Flagman.Repositories.IdempotencyKeyRepoDB;
 
-// Вызывается внутри транзакции бизнес-операции
+
 @Service
 public class IdempotencyService {
     private static final int MAX_KEY_LENGTH = 200;

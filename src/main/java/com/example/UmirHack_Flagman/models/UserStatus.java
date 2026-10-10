@@ -4,6 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public enum UserStatus {
     @JsonProperty("active") ACTIVE,
-    @JsonProperty("pending_verification") PENDING_VERIFICATION,
-    @JsonProperty("disabled") DISABLED
+    @JsonProperty("pending") PENDING_VERIFICATION,
+    @JsonProperty("blocked") DISABLED
 }
