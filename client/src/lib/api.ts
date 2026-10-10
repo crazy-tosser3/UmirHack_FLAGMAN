@@ -1,6 +1,5 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
-// По умолчанию запросы идут через прокси Vite (см. vite.config.ts) — тот же origin, cookie работают без CORS
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
 
 const api = axios.create({
@@ -11,20 +10,16 @@ const api = axios.create({
   },
 });
 
-// Access token живет только в памяти; refresh token — в HttpOnly cookie, JS его не видит
 let accessToken: string | null = null;
 
 export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
 
-// На эти запросы 401 означает неверные данные, а не истекший токен
 const NO_REFRESH_ENDPOINTS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout', '/auth/invite'];
 
 let refreshing: Promise<string | null> | null = null;
 
-// Один refresh на всех: бэкенд ротирует refresh token, и повторная отправка старого
-// (например, из двух параллельных запросов) считается кражей — вся сессия отзывается
 export function refreshAccessToken(): Promise<string | null> {
   refreshing ??= axios
     .post(`${BASE_URL}/auth/refresh`, null, { withCredentials: true })
@@ -65,7 +60,6 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Access token истек — обновляем и повторяем исходный запрос один раз
     config._retried = true;
     const token = await refreshAccessToken();
     if (!token) {

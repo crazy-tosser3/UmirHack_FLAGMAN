@@ -7,7 +7,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // После перезагрузки страницы access token в памяти пуст — восстанавливаем сессию по refresh cookie
   useEffect(() => {
     let isMounted = true;
 
@@ -35,7 +34,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => { isMounted = false; };
   }, []);
 
-  // Refresh не удался посреди работы — сессия закончилась, ProtectedRoute отправит на /login
   useEffect(() => {
     const handleLogout = () => {
       setAccessToken(null);

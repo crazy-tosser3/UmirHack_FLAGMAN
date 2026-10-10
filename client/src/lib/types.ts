@@ -6,3 +6,5 @@ export interface User {
   name: string;
   role: UserRole;
 }
+
+export type Unit = "g" | "pcs" | "ml"
