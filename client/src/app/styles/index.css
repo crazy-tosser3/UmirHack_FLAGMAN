@@ -38,6 +38,12 @@
   --font-golos: 'Golos', Arial, Helvetica, sans-serif;
 }
 
+@layer base {
+  th {
+    font-weight: normal;
+  }
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -62,7 +68,7 @@ button {
 
 *::selection {
   background-color: var(--accent);
-  color: var(--white);
+  color: var(--black);
 }
 
 input::placeholder{

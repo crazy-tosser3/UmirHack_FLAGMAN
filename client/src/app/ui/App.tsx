@@ -1,3 +1,4 @@
+import { navigation } from "@lib/config";
 import { LoginPage } from "@pages/login";
 import { NotFoundPage } from "@pages/not-found";
 import { useAuth } from "@shared/auth/auth-service";
@@ -36,15 +37,16 @@ const AppLayout = () => {
             ) : (
             <>
               {loading || (
-                <motion.div 
+                <motion.main 
                 key={location.pathname}
-                className="content"
+                className="content flex flex-col"
                 initial={{y: 50, opacity: 0}}
                 animate={{y: 0, opacity: 1}}
                 exit={{y: 50, opacity: 0}}
+                transition={{type: "spring", damping: 20}}
                 >
                   <Outlet />
-                </motion.div>
+                </motion.main>
               )}
             </>
             )}
@@ -61,6 +63,9 @@ const App = () => {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/login" element={<LoginPage />} />
+            {navigation.map((page, index) => (
+              <Route key={index} path={page.path} element={page.element} />
+            ))}
           <Route element={<ProtectedRoute />}> 
             <Route index element={<Navigate to="/dashboard" />} />
           </Route>

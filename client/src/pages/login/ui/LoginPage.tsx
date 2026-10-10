@@ -2,25 +2,28 @@
 import { useAuth } from '@shared/auth/auth-service';
 import { useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useSearchParams } from 'react-router-dom';
 import LoginBtn from './LoginBtn';
 import { PageTitle } from '@shared/page-title';
+import { useRedirectTo } from '@shared/hooks/redirect-to';
 
 export function LoginPage() {
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const { login } = useAuth();
   
-  const navigate = useNavigate();
+  const redirectPath = searchParams.get('redirect') ?? '/';
+  const redirectTo = useRedirectTo(redirectPath);
 
   const handleSubmit = async (event: React.SubmitEvent) => {
     event.preventDefault();
 
     try {
       await login(email, password);
-      navigate('/dashboard', { replace: true });
+      redirectTo();
     } catch {
       alert('Ошибка авторизации');
     }
@@ -69,9 +72,9 @@ export function LoginPage() {
         <span className='text-center'>
           Нет аккаунта?
         </span>
-        <button className='p-1 px-2 rounded-xl bg-secondary'>
+        <NavLink to="/register" className='p-1 px-2 rounded-xl bg-secondary'>
           Зарегистрироваться
-        </button>
+        </NavLink>
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import { motion, useScroll, useTransform } from "framer-motion"
 export const Header = () => {
   const { scrollY } = useScroll();
   return (
-    <div className="py-4 mb-4 sticky top-0 bg-bg">
+    <div className="py-4 mb-4 sticky top-0 bg-bg z-50">
       <motion.div style={{opacity: useTransform(scrollY, [0, 100], [0, 1])}} className="-z-1 absolute inset-0 shadow-md" />
       <header className="content flex gap-4 justify-between items-center">
         <NavLink to={"/"} className="text-2xl font-oswald rounded-lg">Pantry</NavLink>
