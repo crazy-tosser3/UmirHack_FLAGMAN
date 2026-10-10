@@ -3,7 +3,7 @@ import { FaArrowUp } from "react-icons/fa"
 
 export const Footer = () => {
   return (
-    <div className="bg-text text-primary p-4">
+    <div className="bg-text text-primary py-4">
       <footer className="content flex gap-4 justify-between items-center">
         <h1 className="">Pantry</h1>
         <TextPushBtn className="bg-primary text-text p-2 rounded-full" onClick={() => scrollTo(0, 0)}>

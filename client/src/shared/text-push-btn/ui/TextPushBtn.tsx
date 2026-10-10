@@ -12,7 +12,7 @@ export const TextPushBtn = ({className="", onClick, children}:PushBtnProps) => {
   
   return (
     <button 
-    className={cn("overflow-hidden", className)} 
+    className={cn("overflow-hidden active:scale-90 transition-transform", className)} 
     onPointerEnter={() => setIsHover(true)}
     onPointerLeave={() => setIsHover(false)}
     onClick={onClick}
@@ -20,10 +20,10 @@ export const TextPushBtn = ({className="", onClick, children}:PushBtnProps) => {
       <AnimatePresence mode="wait">
         <motion.div
         key={+isHover}
-        initial={{y: 30, opacity: 0, scale: 0.1}}
+        initial={{y: 30, opacity: 0, scale: 0.8}}
         animate={{y: 0, opacity: 1, scale: 1}}
-        exit={{y: -30, opacity: 0, scale: 0.1}}
-        transition={{type: 'tween', duration: .3}}
+        exit={{y: -30, opacity: 0, scale: 0.8}}
+        transition={{type: 'tween', duration: .2}}
         >
           {children}
         </motion.div>
