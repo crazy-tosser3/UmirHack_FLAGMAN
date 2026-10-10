@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import com.example.UmirHack_Flagman.Entity.IngredientEntity;
 
 public interface IngredientRepoDB extends JpaRepository<IngredientEntity, UUID>, JpaSpecificationExecutor<IngredientEntity> {
+
+    boolean existsByNameIgnoreCase(String name);
 }

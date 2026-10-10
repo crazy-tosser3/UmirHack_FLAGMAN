@@ -47,6 +47,8 @@ import tools.jackson.databind.json.JsonMapper;
         "app.inventory.expiry-check-interval-ms=3600000",
         "app.inventory.expiry-warning-hours=24",
         "app.inventory.offers-horizon-hours=72",
+        "app.admin.email=admin@flagman.local",
+        "app.admin.password=" + IntegrationTest.PASSWORD,
         "spring.jpa.show-sql=false"
 })
 @Import(TestcontainersConfig.class)

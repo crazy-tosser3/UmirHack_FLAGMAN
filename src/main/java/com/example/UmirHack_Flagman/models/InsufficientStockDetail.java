@@ -6,7 +6,6 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
-// элемент error.details для 409 INSUFFICIENT_STOCK
 @Setter 
 @Getter 
 public class InsufficientStockDetail {

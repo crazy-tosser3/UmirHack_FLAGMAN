@@ -20,4 +20,6 @@ public interface DishRepoDB extends JpaRepository<DishEntity, UUID>, JpaSpecific
             left join fetch d.ingredients di left join fetch di.ingredient
             where d.id in :ids""")
     List<DishEntity> findWithIngredients(Collection<UUID> ids);
+
+    boolean existsByNameIgnoreCase(String name);
 }

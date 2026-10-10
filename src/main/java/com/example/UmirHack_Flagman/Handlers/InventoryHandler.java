@@ -31,6 +31,7 @@ import com.example.UmirHack_Flagman.models.ConsuptionData;
 import com.example.UmirHack_Flagman.models.CreateOrderData;
 import com.example.UmirHack_Flagman.models.DeliveryData;
 import com.example.UmirHack_Flagman.models.DeliveryResponse;
+import com.example.UmirHack_Flagman.models.CreateDish;
 import com.example.UmirHack_Flagman.models.DishList;
 import com.example.UmirHack_Flagman.models.IngredientList;
 import com.example.UmirHack_Flagman.models.OffersResponse;
@@ -38,6 +39,7 @@ import com.example.UmirHack_Flagman.models.OrderData;
 import com.example.UmirHack_Flagman.models.StockBatchesResponse;
 import com.example.UmirHack_Flagman.models.StockResponse;
 import com.example.UmirHack_Flagman.models.StopListResponse;
+import com.example.UmirHack_Flagman.models.PostIngredientsList;
 
 import jakarta.validation.Valid;
 
@@ -77,6 +79,14 @@ public class InventoryHandler {
         return ResponseEntity.ok(catalogService.getIngredients(page, limit, search));
     }
 
+    @PostMapping("ingredients")
+    public ResponseEntity<IngredientList> createIngredients(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @Valid @RequestBody PostIngredientsList req) {
+        Roles.require(role, Roles.ADMIN);
+        return ResponseEntity.status(HttpStatus.CREATED).body(catalogService.createIngredients(req));
+    }
+
     // Блюда
 
     @GetMapping("dishes")
@@ -86,6 +96,14 @@ public class InventoryHandler {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean active) {
         return ResponseEntity.ok(catalogService.getDishes(page, limit, search, active));
+    }
+
+    @PostMapping("dishes")
+    public ResponseEntity<DishList> createDishes(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @Valid @RequestBody CreateDish req) {
+        Roles.require(role, Roles.ADMIN);
+        return ResponseEntity.status(HttpStatus.CREATED).body(catalogService.createDishes(req));
     }
 
     // Поставки
