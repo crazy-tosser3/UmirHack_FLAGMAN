@@ -3,13 +3,12 @@
 
 :root {
   /* Цвета */
-  --black: #22222b;
-  --white: #fbfbfe;
-  --light-lavender: #eeedfe;
-  --lavender: #aba8d6;
-  --orange: #f49b1e;
+  --black: oklch(25% 0.017 285);
+  --white: oklch(98% 0.004 285);
+  --light-lavender: oklch(92% 0.023 285);
+  --lavender: oklch(74% 0.065 285);
+  --orange: oklch(76% 0.16 67);
   
-  /* Цвета страницы вне зависимости от темы */
   --bg: var(--white);
   --text: var(--black);
   --accent: var(--orange);
@@ -91,7 +90,7 @@ input::placeholder{
 }
 
 *::-webkit-scrollbar-track {
-  background-color: var(--secondary);
+  background-color: transparent;
 }
 
 *::-webkit-scrollbar-thumb {

@@ -1,13 +1,15 @@
 // src/pages/LoginPage.jsx
 import { useAuth } from '@shared/auth/auth-service';
 import { useState } from 'react';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaExclamationTriangle, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { NavLink, useSearchParams } from 'react-router-dom';
 import LoginBtn from './LoginBtn';
 import { PageTitle } from '@shared/page-title';
 import { useRedirectTo } from '@shared/hooks/redirect-to';
+import type { AxiosError } from 'axios';
 
 export function LoginPage() {
+  const [err, setErr] = useState<AxiosError | null>(null);
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,8 +26,8 @@ export function LoginPage() {
     try {
       await login(email, password);
       redirectTo();
-    } catch {
-      alert('Ошибка авторизации');
+    } catch (err) {
+      setErr(err as AxiosError)
     }
   };
 
@@ -55,7 +57,7 @@ export function LoginPage() {
           onChange={event => setPassword(event.target.value)}
           placeholder="Пароль_123"
           name='userPassword'
-          className='p-2 bg-secondary rounded-lg'
+          className='p-2 bg-secondary rounded-lg w-full'
           />
           <button 
           type='button' 
@@ -67,6 +69,10 @@ export function LoginPage() {
         </div>
         <NavLink to="/password-reset" className="text-sm">Не помню пароль</NavLink>
         <LoginBtn />
+        {!!err && <div className='bg-err-bg text-err flex items-center justify-between gap-2 rounded-lg p-2'>
+          <FaExclamationTriangle />
+          <span>{err.status === 401 ? "Неверный логин или пароль" : "Произошла неизвестная ошибка, попробуйте войти позже"}</span>
+        </div>}
       </form>
       <div className='text-primary flex gap-2 m-auto items-center justify-center'>
         <span className='text-center'>

@@ -1,0 +1,1 @@
+export { IcoBtn } from "./ui/IcoBtn";
