@@ -11,7 +11,6 @@ import type { DailyIngredients } from "../model/types";
 const ROW_HEIGHT = 36;
 
 export const DailyIngredientsChart = ({ data }: { data: DailyIngredients }) => {
-  // Разные единицы на одной оси несравнимы, поэтому показываем одну единицу за раз
   const availableUnits = useMemo(
     () => [...new Set(data.items.map((item) => item.unit))],
     [data.items],
@@ -47,7 +46,7 @@ export const DailyIngredientsChart = ({ data }: { data: DailyIngredients }) => {
               type="button"
               onClick={() => setSelectedUnit(u)}
               className={cn(
-                "px-3 py-0.5 rounded-md transition-colors",
+                "px-3 py-1 rounded-md transition-colors",
                 u === unit ? "bg-bg" : "hover:bg-bg/50",
               )}
             >

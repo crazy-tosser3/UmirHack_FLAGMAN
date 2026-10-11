@@ -25,10 +25,10 @@ export const DailyDishesChart = ({ data }: { data: DailyDishes }) => {
     <div className="flex flex-col gap-3">
       <div className="flex gap-2 flex-wrap">
         <span className="bg-secondary px-3 py-1 rounded-full tabular-nums">
-          Порций: <b>{data.totalPortions}</b>
+          Порций: {data.totalPortions}
         </span>
         <span className="bg-secondary px-3 py-1 rounded-full tabular-nums">
-          Заказов: <b>{data.totalOrders}</b>
+          Заказов: {data.totalOrders}
         </span>
       </div>
 

@@ -4,11 +4,13 @@
 :root {
   /* Цвета */
   --black: oklch(25% 0.017 285);
+  --light-gray: oklch(95% 0.01 285);
   --white: oklch(98% 0.01 285);
   --light-lavender: oklch(92% 0.023 285);
   --lavender: oklch(74% 0.065 285);
   --orange: oklch(76% 0.08 127);
   
+  --dark-bg: var(--light-gray);
   --bg: var(--white);
   --text: var(--black);
   --accent: var(--orange);
@@ -17,6 +19,7 @@
 }
 
 @theme {
+  --color-dark-bg: var(--dark-bg);
   --color-bg: var(--bg);
   --color-text: var(--text);
   --color-accent: var(--accent);
@@ -48,7 +51,7 @@ html {
 }
 
 body {
-  background-color: var(--bg);
+  background-color: var(--dark-bg);
   color: var(--text);
 
   font-family: 'Golos', Arial, Helvetica, sans-serif;

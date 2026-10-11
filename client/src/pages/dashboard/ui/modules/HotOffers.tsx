@@ -77,8 +77,8 @@ const HotOffers = () => {
   const showLoader = useDelayedValue(isPending, { minDisplay: 300 });
 
   return (
-    <div className="flex flex-col h-full gap-2">
-      <h1 className="text-2xl font-oswald shrink-0 flex gap-2 items-center justify-between">
+    <div className="flex flex-col h-full">
+      <h1 className="p-2 bg-text text-bg text-2xl font-oswald shrink-0 flex gap-2 items-center justify-between">
         <span>Горячие предложения</span>
         <FaFire />
       </h1>
@@ -92,7 +92,7 @@ const HotOffers = () => {
           Не удалось загрузить данные
         </p>
       ) : (
-        <div className="flex-1 min-h-0 overflow-auto flex flex-col gap-3">
+        <div className="p-2 flex-1 min-h-0 overflow-auto flex flex-col gap-3">
           {data?.items.map((dish: Dish, index: number) => (
             <HotOffer dish={dish} key={index} />
           ))}

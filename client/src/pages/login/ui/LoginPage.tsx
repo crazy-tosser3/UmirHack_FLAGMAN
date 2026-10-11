@@ -32,7 +32,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className='flex flex-col sm:flex-row shadow-lg gap-4 mx-auto rounded-xl border border-accent overflow-hidden'>
+    <div className='flex bg-bg flex-col sm:flex-row shadow-lg gap-4 mx-auto rounded-xl border border-accent overflow-hidden'>
       <PageTitle title='Вход' />
       <div className='bg-accent flex flex-col text-center sm:text-left justify-center gap-4 p-4'>
         <h1 className='text-5xl font-oswald'>Добро пожаловать!</h1>

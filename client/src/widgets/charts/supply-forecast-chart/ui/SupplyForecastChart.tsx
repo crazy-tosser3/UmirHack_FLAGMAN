@@ -1,4 +1,3 @@
-// @widgets/supply-forecast-chart.tsx
 import { useMemo, useState } from "react";
 import {
   Bar, BarChart, CartesianGrid, Legend,
@@ -7,12 +6,12 @@ import {
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { ChartEmpty, ChartTooltip } from "../../shared";
 import type { SupplyForecast } from "../model/types";
+import { useMediaQuery } from "@shared/hooks/use-media-query";
 
 export const SupplyForecastChart = ({ data }: { data: SupplyForecast }) => {
-  const pageSize = 6;
+  const pageSize = useMediaQuery("(min-width: 900px)") ? 6 : 1;
   const [page, setPage] = useState(0);
 
-  // Страница может выйти за границы при смене данных
   const totalPages = Math.ceil(data.items.length / pageSize);
   const safePage = Math.max(0, Math.min(page, totalPages - 1));
 
@@ -26,9 +25,9 @@ export const SupplyForecastChart = ({ data }: { data: SupplyForecast }) => {
       paginatedItems.map((item) => ({
         name: item.ingredientName,
         unit: item.unit,
-        available: item.availableQuantity,
-        required: item.dailyConsumption * data.coverDays,
-        suggested: item.suggestedQuantity,
+        available: Math.round(item.availableQuantity),
+        required: Math.round(item.dailyConsumption * data.coverDays),
+        suggested: Math.round(item.suggestedQuantity),
       })),
     [paginatedItems, data.coverDays],
   );
@@ -65,7 +64,7 @@ export const SupplyForecastChart = ({ data }: { data: SupplyForecast }) => {
             <Legend wrapperStyle={{ fontSize: 13 }} />
 
             <Bar dataKey="available" name="В наличии"
-                 fill="var(--color-success)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                 fill="var(--color-text)" radius={[4, 4, 0, 0]} maxBarSize={40} />
             <Bar dataKey="required" name={`Нужно на ${data.coverDays} дн.`}
                  fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={40} />
             <Bar dataKey="suggested" name="Рекомендуется закупить"
@@ -74,7 +73,6 @@ export const SupplyForecastChart = ({ data }: { data: SupplyForecast }) => {
         </ResponsiveContainer>
       </div>
 
-      {/* Пагинация */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
           <button

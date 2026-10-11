@@ -9,7 +9,6 @@ import { AnalyticsChart } from "./AnalyticsChart";
 
 interface Variant {
   label: string;
-  // Отчет строится за конкретный день
   withDate?: boolean;
   render: (date: string) => ReactNode;
 }
@@ -49,12 +48,12 @@ export const AnalyticsPage = () => {
 
   return (
     <div className="flex flex-col h-full gap-2">
-      <h1 className="text-2xl font-oswald shrink-0 flex gap-2 items-center justify-between">
+      <h1 className="p-2 bg-accent text-2xl font-oswald shrink-0 flex gap-2 items-center justify-between">
         <span>Аналитика</span>
         <FaChartBar />
       </h1>
 
-      <div className="flex gap-2 flex-wrap shrink-0">
+      <div className="flex gap-2 flex-wrap shrink-0 p-2">
         <select
           value={variantId}
           onChange={(e) => isVariantId(e.target.value) && setVariantId(e.target.value)}
@@ -77,9 +76,7 @@ export const AnalyticsPage = () => {
           />
         )}
       </div>
-
-      {/* key: при смене отчета сбрасываем состояние, чтобы данные одного отчета не попали в график другого */}
-      <div key={variantId} className="flex-1 min-h-0 overflow-auto flex flex-col">
+      <div key={variantId} className="flex-1 p-2 min-h-0 overflow-x-hidden flex flex-col">
         {variant.render(date)}
       </div>
     </div>

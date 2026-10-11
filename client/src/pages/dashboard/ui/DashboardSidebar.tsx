@@ -11,9 +11,9 @@ const DashboardSidebar = () => {
   const isOpen = isDesktop && expanded;
 
   return (
-    <aside className="p-2 z-45 backdrop-blur-md sticky top-0 flex flex-col gap-4 items-center border border-primary rounded-xl">
+    <aside className="border border-primary p-2 z-45 backdrop-blur-md sticky top-0 flex flex-col gap-4 items-center rounded-xl">
       <motion.nav
-        className="p-2 rounded-lg bg-text text-bg flex sm:flex-col gap-1"
+        className="p-2 shadow-md rounded-lg bg-text text-bg flex sm:flex-col gap-1"
         animate={{
           width: isDesktop ? (expanded ? "fit-content" : 52) : "fit-content",
         }}
