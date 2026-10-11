@@ -27,3 +27,9 @@ export function formatDateTime(iso: string): string {
     minute: '2-digit',
   });
 }
+
+export const units = {
+  "g": "г",
+  "ml": "мл",
+  "pcs": "шт"
+}

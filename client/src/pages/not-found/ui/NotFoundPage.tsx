@@ -2,7 +2,7 @@ import { PageTitle } from "@shared/page-title"
 
 export const NotFoundPage = () => {
   return (
-    <div className="flex flex-col gap-4 items-center text-center">
+    <div className="flex flex-col gap-4 items-center text-center col-span-full">
       <PageTitle title="404" />
 
       <h1 className="font-oswald text-5xl">404</h1>

@@ -1,8 +1,9 @@
-import { DashboardModule, DashboardPage, StopList } from "@pages/dashboard";
+import { DashboardModule, DashboardPage } from "@pages/dashboard";
+import { AnalyticsPage } from "@pages/dashboard/subpages/analytics";
 import { NotFoundPage } from "@pages/not-found";
 import { ProfilePage } from "@pages/profile";
 import type { IconType } from "react-icons";
-import { FaPause } from "react-icons/fa6";
+import { FaChartBar } from "react-icons/fa";
 import { Navigate, Route } from "react-router-dom";
 
 // Навигация (синхронизировано с созданием страниц)
@@ -21,10 +22,10 @@ interface Link {
 
 export const dashboardNavigation: Link[] = [
   {
-    path: "stop-list",
-    element: <DashboardModule rowSpan={2} colSpan={4}><StopList /></DashboardModule>,
-    ico: FaPause,
-    title: "Стоп-лист"
+    path: "analytics",
+    element: <DashboardModule rowSpan={2} colSpan={4}><AnalyticsPage /></DashboardModule>,
+    ico: FaChartBar,
+    title: "Аналитика"
   }
 ]
 

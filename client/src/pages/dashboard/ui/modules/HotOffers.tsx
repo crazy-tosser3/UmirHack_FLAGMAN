@@ -42,7 +42,7 @@ const HotOffer = ({ dish }: { dish: Dish }) => {
         
         <button 
           type="button"
-          className="flex items-center justify-between gap-2 p-1 px-2 rounded-lg hover:bg-secondary transition-colors"
+          className="text-primary flex items-center justify-between gap-2 p-1 px-2 rounded-lg hover:bg-secondary transition-colors"
           onClick={() => setShowDetails(prev => !prev)}
         >
           <span>Подробнее</span>

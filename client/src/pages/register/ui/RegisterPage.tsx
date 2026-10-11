@@ -1,17 +1,19 @@
 // @pages/register/index.tsx
 import api from "@lib/api";
+import type { AxiosError } from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 type RegisterData = {
   name: string;
   email: string;
   password: string;
+  code: string;
 };
 
-const INITIAL_DATA: RegisterData = { name: "", email: "", password: "" };
+const INITIAL_DATA: RegisterData = { name: "", email: "", password: "", code: ""};
 
 const STEPS = [
   { id: "name", title: "Как к вам обращаться?", progress: 20 },
@@ -28,9 +30,10 @@ const slide = {
 };
 
 export const RegisterPage = () => {
+  const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
-  const [data, setData] = useState<RegisterData>(INITIAL_DATA);
+  const [data, setData] = useState<RegisterData>({...INITIAL_DATA, code: searchParams.get('invite') ?? ''});
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
   const navigate = useNavigate();
@@ -69,8 +72,10 @@ export const RegisterPage = () => {
     try {
       await api.post("/auth/register", data);
       setDone(true);
-    } catch {
-      setError("Не удалось создать аккаунт. Возможно почта занята или сервер временно недоступен");
+    } catch (err) {
+      const error = err as AxiosError;
+
+      setError(error.status === 404 ? "Код недействителен. Обратитесь к администратору" : "Не удалось создать аккаунт. Возможно почта занята или сервер временно недоступен");
     }
   };
 
@@ -174,6 +179,16 @@ export const RegisterPage = () => {
                       <span>{"•".repeat(data.password.length)}</span>
                       <span>{`(${data.password.length} символов)`}</span>
                     </div>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-primary">Код-приглашение<span className="text-err">*</span>:</span>
+                    <input 
+                    required 
+                    className="rounded-lg" 
+                    placeholder="XXXXXX-XXXX-XXX-..." 
+                    value={data.code}
+                    onChange={setField("code")}
+                    />
                   </li>
                 </ul>
               )}
