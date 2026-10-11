@@ -7,6 +7,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.UmirHack_Flagman.auth.dto.InviteInfo;
 import com.example.UmirHack_Flagman.auth.dto.LoginData;
@@ -134,6 +135,67 @@ public class AuthService {
         refreshTokenService.revoke(refreshToken);
     }
 
+    // Telegram: вход через виджет и привязка аккаунта. Подпись данных виджета проверяется до вызова
+
+    public static boolean canUseTelegram(Role role) {
+        return role == Role.MANAGER || role == Role.ADMIN;
+    }
+
+    public Session<LoginResponse> loginTelegram(long telegramId) {
+        UserEntity user = userRepository.findByTelegramId(telegramId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "TELEGRAM_NOT_LINKED",
+                        "Этот Telegram не привязан к аккаунту. Войдите по паролю и привяжите Telegram в профиле"));
+        ensureActive(user);
+        ensureTelegramAllowed(user);
+        return startSession(user);
+    }
+
+    @Transactional
+    public UserResponse linkTelegram(UUID userId, long telegramId, String telegramUsername) {
+        UserEntity user = activeUser(userId);
+        ensureTelegramAllowed(user);
+        userRepository.findByTelegramId(telegramId)
+                .filter(other -> !other.getId().equals(userId))
+                .ifPresent(other -> {
+                    throw telegramTaken();
+                });
+        user.setTelegramId(telegramId);
+        user.setTelegramUsername(telegramUsername);
+        try {
+            return toResponse(userRepository.saveAndFlush(user));
+        } catch (DataIntegrityViolationException e) {
+            throw telegramTaken();
+        }
+    }
+
+    @Transactional
+    public UserResponse unlinkTelegram(UUID userId) {
+        UserEntity user = activeUser(userId);
+        user.setTelegramId(null);
+        user.setTelegramUsername(null);
+        return toResponse(userRepository.saveAndFlush(user));
+    }
+
+    private UserEntity activeUser(UUID userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED",
+                        "Требуется действительный access token"));
+        ensureActive(user);
+        return user;
+    }
+
+    private static void ensureTelegramAllowed(UserEntity user) {
+        if (!canUseTelegram(user.getRole())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "FORBIDDEN",
+                    "Вход через Telegram доступен только менеджерам и администраторам");
+        }
+    }
+
+    private static ApiException telegramTaken() {
+        return new ApiException(HttpStatus.CONFLICT, "TELEGRAM_ALREADY_LINKED",
+                "Этот Telegram уже привязан к другому аккаунту");
+    }
+
     public UserResponse getMe(UUID userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED",
@@ -164,6 +226,9 @@ public class AuthService {
         response.setRole(user.getRole());
         response.setStatus(user.getStatus());
         response.setCreatedAt(user.getCreatedAt());
+        response.setUpdatedAt(user.getUpdatedAt());
+        response.setTelegramLinked(user.getTelegramId() != null);
+        response.setTelegramUsername(user.getTelegramUsername());
         return response;
     }
 

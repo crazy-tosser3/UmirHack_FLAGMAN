@@ -130,4 +130,18 @@ class ManagerAnalyticsTest extends IntegrationTest {
         assertThat(get("/analytics/daily/dishes", employee).status()).isEqualTo(403);
         assertThat(get("/analytics/daily/ingredients?date=11.10.2026", manager).status()).isEqualTo(400);
     }
+
+    @Test
+    void burstOfOrdersIsNotExtrapolatedToWholeDay() {
+        stock(manager, cheese, 10000, Duration.ofDays(5));
+        for (int i = 0; i < 10; i++) {
+            post("/orders", employee, orderOf(null, pizza, 1));
+        }
+
+        // 10 порций по 120 г за минуту — это 1200 г за день, а не 1200 × 24 × 60
+        JsonNode limiting = get("/analytics/stock-forecast", manager).body().get("items").get(0).get("limitingIngredient");
+        assertThat(limiting.get("dailyConsumption").decimalValue()).isEqualByComparingTo("1200");
+        // Остатка 8800 г хватает на 3 дня по 1200 г — докупать нечего
+        assertThat(get("/analytics/supply-suggestions?coverDays=3", manager).body().get("items").size()).isZero();
+    }
 }

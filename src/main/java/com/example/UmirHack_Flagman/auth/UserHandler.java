@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
@@ -26,6 +27,8 @@ import com.example.UmirHack_Flagman.auth.dto.TokenResponse;
 import com.example.UmirHack_Flagman.auth.dto.UserResponse;
 import com.example.UmirHack_Flagman.common.ApiException;
 import com.example.UmirHack_Flagman.common.dto.ErrorResponse;
+import com.example.UmirHack_Flagman.telegram.TelegramAuthVerifier;
+import com.example.UmirHack_Flagman.telegram.dto.TelegramAuthDto;
 
 import jakarta.validation.Valid;
 
@@ -37,10 +40,12 @@ public class UserHandler {
 
     private final AuthService authService;
     private final AuthProperties authProperties;
+    private final TelegramAuthVerifier telegramVerifier;
 
-    public UserHandler(AuthService authService, AuthProperties authProperties) {
+    public UserHandler(AuthService authService, AuthProperties authProperties, TelegramAuthVerifier telegramVerifier) {
         this.authService = authService;
         this.authProperties = authProperties;
+        this.telegramVerifier = telegramVerifier;
     }
 
     @PostMapping("register")
@@ -62,6 +67,30 @@ public class UserHandler {
     @PostMapping("invite/verify")
     public ResponseEntity<InviteInfo> verifyInvite(@Valid @RequestBody InviteToken req) {
         return ResponseEntity.ok(authService.inviteInfo(req.getCode()));
+    }
+
+    // Telegram Login Widget: вход для менеджеров и админов с привязанным Telegram
+    @PostMapping("telegram")
+    public ResponseEntity<LoginResponse> loginTelegram(@Valid @RequestBody TelegramAuthDto req) {
+        telegramVerifier.verify(req);
+        AuthService.Session<LoginResponse> session = authService.loginTelegram(req.getId());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie(session.refreshToken()).toString())
+                .cacheControl(CacheControl.noStore())
+                .body(session.body());
+    }
+
+    @PostMapping("telegram/link")
+    public ResponseEntity<UserResponse> linkTelegram(
+            @RequestAttribute(AuthInterceptor.USER_ID_ATTR) UUID userId,
+            @Valid @RequestBody TelegramAuthDto req) {
+        telegramVerifier.verify(req);
+        return ResponseEntity.ok(authService.linkTelegram(userId, req.getId(), req.getUsername()));
+    }
+
+    @DeleteMapping("telegram/link")
+    public ResponseEntity<UserResponse> unlinkTelegram(@RequestAttribute(AuthInterceptor.USER_ID_ATTR) UUID userId) {
+        return ResponseEntity.ok(authService.unlinkTelegram(userId));
     }
 
     @PostMapping("refresh")

@@ -42,6 +42,13 @@ public class UserEntity {
 
     private Instant updatedAt;
 
+    // Привязанный Telegram: вход через виджет и команды бота (только manager/admin)
+    @Column(unique = true)
+    private Long telegramId;
+
+    @Column(length = 64)
+    private String telegramUsername;
+
     protected UserEntity() {
     }
 

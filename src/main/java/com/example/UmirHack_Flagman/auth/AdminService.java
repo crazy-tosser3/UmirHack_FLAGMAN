@@ -194,6 +194,8 @@ public class AdminService {
         response.setStatus(user.getStatus());
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
+        response.setTelegramLinked(user.getTelegramId() != null);
+        response.setTelegramUsername(user.getTelegramUsername());
         return response;
     }
 

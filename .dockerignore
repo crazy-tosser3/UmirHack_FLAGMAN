@@ -1,0 +1,10 @@
+target
+.git
+.vscode
+.idea
+.postman
+postman
+scripts
+*.md
+.DS_Store
+rundb.txt

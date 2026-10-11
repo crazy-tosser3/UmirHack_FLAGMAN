@@ -49,6 +49,8 @@ import tools.jackson.databind.json.JsonMapper;
         "app.inventory.expiry-check-interval-ms=3600000",
         "app.inventory.expiry-warning-hours=24",
         "app.inventory.offers-horizon-hours=72",
+        "app.telegram.bot-token=" + IntegrationTest.TELEGRAM_BOT_TOKEN,
+        "app.telegram.polling-enabled=false",
         "app.admin.email=admin@flagman.local",
         "app.admin.password=" + IntegrationTest.PASSWORD,
         "spring.jpa.show-sql=false"
@@ -56,6 +58,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Import(TestcontainersConfig.class)
 public abstract class IntegrationTest {
     protected static final String PASSWORD = "TestPassword-123";
+    protected static final String TELEGRAM_BOT_TOKEN = "123456:test-bot-token";
 
     @LocalServerPort
     private int port;

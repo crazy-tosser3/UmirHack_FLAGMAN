@@ -22,6 +22,8 @@ public interface UserRepoDB
 
     boolean existsByRole(Role role);
 
+    Optional<UserEntity> findByTelegramId(Long telegramId);
+
     // Блокировка не дает двум админам одновременно разжаловать друг друга
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from UserEntity u where u.role = com.example.UmirHack_Flagman.auth.dto.Role.ADMIN and u.status = com.example.UmirHack_Flagman.auth.dto.UserStatus.ACTIVE order by u.id")

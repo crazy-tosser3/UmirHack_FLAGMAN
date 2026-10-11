@@ -10,11 +10,12 @@ import org.springframework.stereotype.Component;
 
 import com.example.UmirHack_Flagman.common.IdSum;
 
-// Средний расход ингредиентов под заказы за последние 7 дней (или с первого заказа, если данных меньше)
+// Средний расход ингредиентов под заказы за последние 7 дней (или с первого заказа, если данных меньше).
+// Окно не короче суток: расход за час пик, растянутый на 24 часа, завышает прогнозы и закупки в разы
 @Component
 public class ConsumptionStats {
     public static final Duration WINDOW = Duration.ofDays(7);
-    private static final Duration MIN_WINDOW = Duration.ofHours(1);
+    private static final Duration MIN_WINDOW = Duration.ofDays(1);
 
     private final StockMovementRepoDB movementRepo;
 

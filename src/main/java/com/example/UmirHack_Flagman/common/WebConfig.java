@@ -27,7 +27,8 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/v1/auth/login",
                         "/api/v1/auth/refresh",
                         "/api/v1/auth/logout",
-                        "/api/v1/auth/invite/**"
+                        "/api/v1/auth/invite/**",
+                        "/api/v1/auth/telegram"
                 );
     }
 

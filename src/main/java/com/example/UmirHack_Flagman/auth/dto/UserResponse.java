@@ -16,4 +16,7 @@ public class UserResponse {
     private UserStatus status;
     private Instant createdAt;
     private Instant updatedAt;
+    // null — Telegram не привязан
+    private String telegramUsername;
+    private boolean telegramLinked;
 }
