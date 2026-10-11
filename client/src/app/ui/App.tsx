@@ -66,7 +66,7 @@ const App = () => {
           <Route element={<ProtectedRoute />}> 
             <Route index element={<Navigate to="/dashboard" />} />
             {navigation.map((page, index) => (
-              <Route key={index} path={page.path} element={page.element} />
+              <Route key={index} path={page.path} element={page.element}>{page.nested}</Route>
             ))}
           </Route>
           <Route path="*" element={<NotFoundPage />} />

@@ -1,12 +1,13 @@
-import DashboardModule from "./DashboardModule"
-import HotOffers from "./modules/HotOffers"
+import { Outlet } from "react-router-dom"
+import DashboardSidebar from "./DashboardSidebar"
 
 export const DashboardPage = () => {
   return (
-    <div className="flex-1 overflow-y-hidden grid md:grid-cols-3 lg:grid-cols-4 grid-rows-5 gap-4">
-      <DashboardModule rowSpan={5} colSpan={1}>
-        <HotOffers />
-      </DashboardModule>
+    <div className="flex-1 overflow-y-hidden flex flex-col sm:flex-row gap-4">
+      <DashboardSidebar />
+      <div className="sm:flex-2 md:flex-3 grid grid-rows-5">
+        <Outlet />
+      </div>
     </div>
   )
 }

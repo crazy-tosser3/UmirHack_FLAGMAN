@@ -4,7 +4,7 @@
 :root {
   /* Цвета */
   --black: oklch(25% 0.017 285);
-  --white: oklch(98% 0.004 285);
+  --white: oklch(98% 0.01 285);
   --light-lavender: oklch(92% 0.023 285);
   --lavender: oklch(74% 0.065 285);
   --orange: oklch(76% 0.16 67);

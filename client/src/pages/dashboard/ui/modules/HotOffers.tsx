@@ -4,7 +4,7 @@ import { cn, copyText } from "@lib/utils"
 import { useDelayedValue } from "@shared/hooks/use-delayed-value"
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
-import { FaCircleNotch } from "react-icons/fa"
+import { FaCircleNotch, FaFire } from "react-icons/fa"
 import { FaChevronDown } from "react-icons/fa6"
 
 interface Reason {
@@ -51,8 +51,8 @@ const HotOffer = ({ dish }: { dish: Dish }) => {
         
         {showDetails && (
           <>
-            {dish.reasons.map((reason) => (
-              <li>
+            {dish.reasons.map((reason, index) => (
+              <li key={index}>
                 <h3 className="text-xl font-manrope">{reason.ingredientName}</h3>
                 <p>{reason.explanation}</p>
               </li>
@@ -77,8 +77,11 @@ const HotOffers = () => {
   const showLoader = useDelayedValue(isPending, { minDisplay: 300 });
 
   return (
-    <div className="flex flex-col h-full gap-2"> {/* ← h-full */}
-      <h1 className="text-2xl font-oswald shrink-0">Горячие предложения</h1>
+    <div className="flex flex-col h-full gap-2">
+      <h1 className="text-2xl font-oswald shrink-0 flex gap-2 items-center justify-between">
+        <span>Горячие предложения</span>
+        <FaFire />
+      </h1>
       
       {showLoader ? (
         <div className="flex-1 grid place-items-center">
