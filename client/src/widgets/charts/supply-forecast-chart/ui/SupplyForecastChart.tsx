@@ -5,41 +5,16 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { ChartEmpty, ChartTooltip } from "../../shared";
 import type { SupplyForecast } from "../model/types";
-
-interface TooltipEntry {
-  name: string;
-  value: number;
-  color: string;
-  payload: { unit: string };
-}
-
-const ChartTooltip = ({ active, payload, label }: {
-  active?: boolean;
-  payload?: TooltipEntry[];
-  label?: string;
-}) => {
-  if (!active || !payload?.length) return null;
-
-  return (
-    <div className="rounded-xl border border-primary/20 bg-white p-3 text-sm shadow-lg">
-      <p className="mb-1 font-medium">{label}</p>
-      {payload.map((entry) => (
-        <p key={entry.name} style={{ color: entry.color }}>
-          {entry.name}: <b>{entry.value}</b> {entry.payload.unit}
-        </p>
-      ))}
-    </div>
-  );
-};
 
 export const SupplyForecastChart = ({ data }: { data: SupplyForecast }) => {
   const pageSize = 6;
   const [page, setPage] = useState(0);
 
-  // Сбрасываем страницу при смене данных
+  // Страница может выйти за границы при смене данных
   const totalPages = Math.ceil(data.items.length / pageSize);
-  const safePage = Math.min(page, totalPages - 1);
+  const safePage = Math.max(0, Math.min(page, totalPages - 1));
 
   const paginatedItems = useMemo(() => {
     const start = safePage * pageSize;
@@ -57,6 +32,8 @@ export const SupplyForecastChart = ({ data }: { data: SupplyForecast }) => {
       })),
     [paginatedItems, data.coverDays],
   );
+
+  if (data.items.length === 0) return <ChartEmpty text="Закупать ничего не нужно" />;
 
   return (
     <div className="flex flex-col gap-2">
@@ -82,13 +59,13 @@ export const SupplyForecastChart = ({ data }: { data: SupplyForecast }) => {
               axisLine={false}
             />
             <Tooltip
-              content={<ChartTooltip />}
+              content={ChartTooltip}
               cursor={{ fill: "var(--primary)", fillOpacity: 0.06 }}
             />
             <Legend wrapperStyle={{ fontSize: 13 }} />
 
             <Bar dataKey="available" name="В наличии"
-                 fill="var(--success)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                 fill="var(--color-success)" radius={[4, 4, 0, 0]} maxBarSize={40} />
             <Bar dataKey="required" name={`Нужно на ${data.coverDays} дн.`}
                  fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={40} />
             <Bar dataKey="suggested" name="Рекомендуется закупить"

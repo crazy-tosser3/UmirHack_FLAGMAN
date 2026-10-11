@@ -1,52 +1,51 @@
-import api from "@lib/api";
-import { useDelayedValue } from "@shared/hooks/use-delayed-value";
-import { useQuery } from "@tanstack/react-query";
+import { DailyDishesChart } from "@widgets/charts/daily-dishes-chart";
+import { DailyIngredientsChart } from "@widgets/charts/daily-ingredients-chart";
 import { SupplyForecastChart } from "@widgets/charts/supply-forecast-chart";
-import type { ComponentType } from "react";
+import dayjs from "dayjs";
+import type { ReactNode } from "react";
 import { useState } from "react";
-import { FaChartBar, FaCircleNotch } from "react-icons/fa";
+import { FaChartBar } from "react-icons/fa";
+import { AnalyticsChart } from "./AnalyticsChart";
 
-interface ChartProps {
-  data: unknown;
+interface Variant {
+  label: string;
+  // Отчет строится за конкретный день
+  withDate?: boolean;
+  render: (date: string) => ReactNode;
 }
 
-const variants: Array<{
-  label: string;
-  api: string;
-  Chart: ComponentType<ChartProps>;
-}> = [
-  {
+const variants = {
+  supply: {
     label: "Следует закупить",
-    api: "/supply-suggestions",
-    Chart: SupplyForecastChart,
+    render: () => <AnalyticsChart path="/supply-suggestions" Chart={SupplyForecastChart} />,
   },
-  {
+  dishes: {
     label: "Продано блюд",
-    api: "/daily/dishes",
-    Chart: SupplyForecastChart,
+    withDate: true,
+    render: (date) => (
+      <AnalyticsChart path="/daily/dishes" params={{ date }} Chart={DailyDishesChart} />
+    ),
   },
-  {
+  ingredients: {
     label: "Потрачено ингредиентов",
-    api: "/daily/ingredients",
-    Chart: SupplyForecastChart,
+    withDate: true,
+    render: (date) => (
+      <AnalyticsChart path="/daily/ingredients" params={{ date }} Chart={DailyIngredientsChart} />
+    ),
   },
-];
+} satisfies Record<string, Variant>;
+
+type VariantId = keyof typeof variants;
+
+const variantIds = Object.keys(variants) as VariantId[];
+
+const isVariantId = (value: string): value is VariantId => value in variants;
 
 export const AnalyticsPage = () => {
-  const [apiPath, setApiPath] = useState(variants[0].api);
+  const [variantId, setVariantId] = useState<VariantId>("supply");
+  const [date, setDate] = useState(() => dayjs().format("YYYY-MM-DD"));
 
-  const { data, isPending, isError } = useQuery({
-    queryKey: ["analytics", apiPath],
-    queryFn: async () => {
-      const res = await api.get("/analytics" + apiPath);
-      return res.data;
-    },
-  });
-
-  const showLoader = useDelayedValue(isPending, { minDisplay: 300 });
-
-  const activeVariant = variants.find((v) => v.api === apiPath) ?? variants[0];
-  const Chart = activeVariant.Chart;
+  const variant: Variant = variants[variantId];
 
   return (
     <div className="flex flex-col h-full gap-2">
@@ -55,30 +54,34 @@ export const AnalyticsPage = () => {
         <FaChartBar />
       </h1>
 
-      {showLoader ? (
-        <div className="flex-1 grid place-items-center">
-          <FaCircleNotch size="20" className="animate-spin" />
-        </div>
-      ) : isError ? (
-        <p className="text-err bg-err-bg p-2 rounded-xl text-center shrink-0">
-          Не удалось загрузить данные
-        </p>
-      ) : (
-        <div className="flex-1 min-h-0 overflow-auto flex flex-col gap-3">
-          <select
-            onChange={(e) => setApiPath(e.target.value)}
-            className="p-1 rounded-md w-fit cursor-pointer"
-          >
-            {variants.map((variant) => (
-              <option value={variant.api} key={variant.label}>
-                {variant.label}
-              </option>
-            ))}
-          </select>
+      <div className="flex gap-2 flex-wrap shrink-0">
+        <select
+          value={variantId}
+          onChange={(e) => isVariantId(e.target.value) && setVariantId(e.target.value)}
+          className="p-1 rounded-md w-fit cursor-pointer"
+        >
+          {variantIds.map((id) => (
+            <option value={id} key={id}>
+              {variants[id].label}
+            </option>
+          ))}
+        </select>
 
-          {data && <Chart data={data} />}
-        </div>
-      )}
+        {variant.withDate && (
+          <input
+            type="date"
+            value={date}
+            max={dayjs().format("YYYY-MM-DD")}
+            onChange={(e) => e.target.value && setDate(e.target.value)}
+            className="p-1 rounded-md cursor-pointer"
+          />
+        )}
+      </div>
+
+      {/* key: при смене отчета сбрасываем состояние, чтобы данные одного отчета не попали в график другого */}
+      <div key={variantId} className="flex-1 min-h-0 overflow-auto flex flex-col">
+        {variant.render(date)}
+      </div>
     </div>
   );
 };
