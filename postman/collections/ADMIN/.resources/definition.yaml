@@ -1,0 +1,2 @@
+$kind: collection
+description: "Только роль admin. Токен — глобальная переменная accessToken."

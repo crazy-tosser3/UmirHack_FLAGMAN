@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import com.example.UmirHack_Flagman.Entity.UserEntity;
 import com.example.UmirHack_Flagman.models.UserStatus;
+import com.example.UmirHack_Flagman.models.Role;
 import com.example.UmirHack_Flagman.support.IntegrationTest;
 
 class AuthIntegrationTest extends IntegrationTest {
@@ -15,7 +16,7 @@ class AuthIntegrationTest extends IntegrationTest {
 
     @Test
     void registerLoginAndMe() {
-        Response registered = post("/auth/register", null, registration(EMAIL));
+        Response registered = post("/auth/register", null, registration(EMAIL, inviteCode(Role.EMPLOYEE)));
         assertThat(registered.status()).isEqualTo(201);
         assertThat(registered.body().get("user").get("role").asString()).isEqualTo("employee");
         assertThat(registered.body().get("user").has("password")).isFalse();
@@ -32,9 +33,10 @@ class AuthIntegrationTest extends IntegrationTest {
 
     @Test
     void emailIsUniqueIgnoringCase() {
-        post("/auth/register", null, registration(EMAIL));
+        existingUser(EMAIL, Role.EMPLOYEE);
+        String code = inviteCode(Role.EMPLOYEE);
 
-        Response duplicate = post("/auth/register", null, registration(EMAIL.toUpperCase()));
+        Response duplicate = post("/auth/register", null, registration(EMAIL.toUpperCase(), code));
 
         assertThat(duplicate.status()).isEqualTo(409);
         assertThat(duplicate.code()).isEqualTo("EMAIL_ALREADY_EXISTS");
@@ -46,12 +48,13 @@ class AuthIntegrationTest extends IntegrationTest {
 
         assertThat(r.status()).isEqualTo(400);
         assertThat(r.code()).isEqualTo("VALIDATION_ERROR");
-        assertThat(r.body().get("error").get("details").size()).isEqualTo(3);
+        // email, password, name и отсутствующий code
+        assertThat(r.body().get("error").get("details").size()).isEqualTo(4);
     }
 
     @Test
     void wrongPasswordAndUnknownEmailLookTheSame() {
-        post("/auth/register", null, registration(EMAIL));
+        existingUser(EMAIL, Role.EMPLOYEE);
 
         Response wrongPassword = login(EMAIL, "WrongPassword-123");
         Response unknownEmail = login("nobody@test.local", "WrongPassword-123");
@@ -63,7 +66,7 @@ class AuthIntegrationTest extends IntegrationTest {
 
     @Test
     void disabledAccountCannotLogin() {
-        post("/auth/register", null, registration(EMAIL));
+        existingUser(EMAIL, Role.EMPLOYEE);
         UserEntity user = userRepo.findByEmail(EMAIL).orElseThrow();
         user.setStatus(UserStatus.DISABLED);
         userRepo.save(user);
@@ -76,7 +79,7 @@ class AuthIntegrationTest extends IntegrationTest {
 
     @Test
     void protectedEndpointsRequireValidToken() {
-        post("/auth/register", null, registration(EMAIL));
+        existingUser(EMAIL, Role.EMPLOYEE);
         String token = login(EMAIL, PASSWORD).body().get("accessToken").asString();
 
         assertThat(get("/auth/me", null).status()).isEqualTo(401);
@@ -86,7 +89,7 @@ class AuthIntegrationTest extends IntegrationTest {
 
     @Test
     void refreshRotatesTokenAndDetectsReuse() {
-        post("/auth/register", null, registration(EMAIL));
+        existingUser(EMAIL, Role.EMPLOYEE);
         String first = login(EMAIL, PASSWORD).cookieValue("refresh_token");
 
         Response refreshed = refresh(first);
@@ -108,7 +111,7 @@ class AuthIntegrationTest extends IntegrationTest {
 
     @Test
     void logoutRevokesSessionAndIsIdempotent() {
-        post("/auth/register", null, registration(EMAIL));
+        existingUser(EMAIL, Role.EMPLOYEE);
         String token = login(EMAIL, PASSWORD).cookieValue("refresh_token");
 
         Response logout = post("/auth/logout", null, null, "Cookie", "refresh_token=" + token);

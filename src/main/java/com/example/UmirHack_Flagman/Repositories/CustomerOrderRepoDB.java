@@ -1,5 +1,6 @@
 package com.example.UmirHack_Flagman.Repositories;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -8,10 +9,13 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import com.example.UmirHack_Flagman.Entity.CustomerOrderEntity;
+import com.example.UmirHack_Flagman.Entity.OrderStatus;
 
 public interface CustomerOrderRepoDB extends JpaRepository<CustomerOrderEntity, UUID>, JpaSpecificationExecutor<CustomerOrderEntity> {
 
     boolean existsByExternalOrderId(String externalOrderId);
+
+    long countByStatusAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(OrderStatus status, Instant from, Instant to);
 
     @Query("""
             select distinct o from CustomerOrderEntity o

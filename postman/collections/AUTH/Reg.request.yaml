@@ -7,6 +7,7 @@ body:
     {
         "email": "crazytosser3@gmail.com",
         "password": "909324mdkmow9023",
-        "name": "crzto3"
+        "name": "crzto3",
+        "code": "{{inviteCode}}"
     }
 order: 1791631526510

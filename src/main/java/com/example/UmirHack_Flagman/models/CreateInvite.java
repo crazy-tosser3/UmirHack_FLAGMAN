@@ -14,10 +14,8 @@ public class CreateInvite {
     @NotNull
     private Role role;
 
-    // Не передан — срок по умолчанию из app.invite.ttl
     private Instant expiresAt;
 
-    // Сколько раз можно зарегистрироваться по ссылке; 0 — без ограничений. Не передан — 1
     @Min(0)
     @Max(1000)
     private Integer clicks;

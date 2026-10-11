@@ -22,7 +22,8 @@ public class RegisterData {
     @Size(max = 100)
     private String name;
 
-    // Код из ссылки-приглашения: пользователь получит роль из приглашения. Без кода — employee
+    // Код из ссылки-приглашения, без него зарегистрироваться нельзя. Роль берется из приглашения
+    @NotBlank
     @Size(max = 100)
     private String code;
 }

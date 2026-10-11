@@ -62,7 +62,6 @@ public class UserHandler {
                 .body(session.body());
     }
 
-    // Для страницы регистрации по ссылке: какую роль получит пользователь
     @PostMapping("invite/verify")
     public ResponseEntity<InviteInfo> verifyInvite(@Valid @RequestBody InviteToken req) {
         return ResponseEntity.ok(authService.inviteInfo(req.getCode()));

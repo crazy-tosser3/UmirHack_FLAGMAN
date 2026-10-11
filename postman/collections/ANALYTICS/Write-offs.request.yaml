@@ -1,0 +1,9 @@
+$kind: http-request
+description: "Списания просрочки. По умолчанию за последние 30 дней."
+url: "{{baseUrl}}/api/v1/analytics/write-offs?from=&to=&ingredientId=&page=1&limit=20"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 27000

@@ -43,4 +43,14 @@ public interface StockMovementRepoDB extends JpaRepository<StockMovementEntity, 
             where m.order.id = :orderId and m.type = :type
             order by m.ingredient.name, m.createdAt""")
     List<StockMovementEntity> findByOrder(UUID orderId, MovementType type);
+
+    @Query("""
+            select i.id as ingredientId, i.name as ingredientName, i.unit as unit,
+                   coalesce(sum(case when m.type = :consumption then m.quantity else 0 end), 0) as consumed,
+                   coalesce(sum(case when m.type = :writeOff then m.quantity else 0 end), 0) as writtenOff
+            from StockMovementEntity m join m.ingredient i
+            where m.createdAt >= :from and m.createdAt < :to and m.type in (:consumption, :writeOff)
+            group by i.id, i.name, i.unit
+            order by sum(m.quantity) desc, i.name""")
+    List<IngredientDayRow> usageByIngredient(Instant from, Instant to, MovementType consumption, MovementType writeOff);
 }

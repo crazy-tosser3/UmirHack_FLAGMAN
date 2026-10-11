@@ -1,0 +1,9 @@
+$kind: http-request
+description: "Отозвать ссылку-приглашение по коду (часть ссылки после code=)."
+url: "{{baseUrl}}/api/v1/admin/users/invite/{{inviteCode}}"
+method: DELETE
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 8000

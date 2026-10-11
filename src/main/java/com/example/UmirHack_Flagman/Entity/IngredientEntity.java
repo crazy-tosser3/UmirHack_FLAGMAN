@@ -20,7 +20,6 @@ public class IngredientEntity {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
-    // g | ml | pcs
     @Column(nullable = false, length = 8)
     private String unit;
 

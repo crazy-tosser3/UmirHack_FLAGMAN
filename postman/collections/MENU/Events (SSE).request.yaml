@@ -1,0 +1,11 @@
+$kind: http-request
+description: "Поток событий: stock.updated, stop-list.updated, offers.updated, delivery.created, order.confirmed, batch.expiring, batch.expired."
+url: "{{baseUrl}}/api/v1/events"
+method: GET
+headers:
+  Accept: "text/event-stream"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 24000

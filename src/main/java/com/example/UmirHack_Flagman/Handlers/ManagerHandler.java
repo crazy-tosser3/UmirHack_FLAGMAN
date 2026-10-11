@@ -1,6 +1,7 @@
 package com.example.UmirHack_Flagman.Handlers;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 
@@ -17,6 +18,8 @@ import com.example.UmirHack_Flagman.Config.AuthInterceptor;
 import com.example.UmirHack_Flagman.Exceptions.ApiException;
 import com.example.UmirHack_Flagman.Services.ManageService;
 import com.example.UmirHack_Flagman.models.AllDeliveryResponse;
+import com.example.UmirHack_Flagman.models.DailyDishesResponse;
+import com.example.UmirHack_Flagman.models.DailyIngredientsResponse;
 import com.example.UmirHack_Flagman.models.DeficitsResponse;
 import com.example.UmirHack_Flagman.models.OrderList;
 import com.example.UmirHack_Flagman.models.StockForecastResponse;
@@ -105,6 +108,24 @@ public class ManagerHandler {
             @RequestParam(defaultValue = "3") int coverDays) {
         requireManager(role);
         return ResponseEntity.ok(manageService.getSupplySuggestions(coverDays));
+    }
+
+    // Дневная статистика; date в формате 2026-10-11, по умолчанию — сегодня
+
+    @GetMapping("analytics/daily/dishes")
+    public ResponseEntity<DailyDishesResponse> getDailyDishes(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        requireManager(role);
+        return ResponseEntity.ok(manageService.getDailyDishes(date));
+    }
+
+    @GetMapping("analytics/daily/ingredients")
+    public ResponseEntity<DailyIngredientsResponse> getDailyIngredients(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        requireManager(role);
+        return ResponseEntity.ok(manageService.getDailyIngredients(date));
     }
 
     private static void requireManager(String role) {

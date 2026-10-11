@@ -61,14 +61,12 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of("CONFLICT", "Конфликт параллельного изменения, повторите запрос", null));
     }
 
-    // Клиент SSE отключился — отвечать уже некому
     @ExceptionHandler(AsyncRequestNotUsableException.class)
     public void handleClientGone(AsyncRequestNotUsableException e) {
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception e) {
-        // 404, 405, 415 и прочие стандартные ошибки Spring MVC
         if (e instanceof org.springframework.web.ErrorResponse mvc) {
             HttpStatus status = HttpStatus.valueOf(mvc.getStatusCode().value());
             return ResponseEntity.status(status)

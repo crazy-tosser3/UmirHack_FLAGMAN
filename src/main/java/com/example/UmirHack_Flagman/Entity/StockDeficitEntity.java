@@ -7,7 +7,6 @@ import java.util.UUID;
 import jakarta.persistence.*;
 import lombok.Getter;
 
-// Фиксируется при отказе в заказе из-за нехватки ингредиента
 @Entity
 @Table(name = "stock_deficits")
 @Getter

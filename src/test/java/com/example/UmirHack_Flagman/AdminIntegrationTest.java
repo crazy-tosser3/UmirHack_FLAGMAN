@@ -47,10 +47,11 @@ class AdminIntegrationTest extends IntegrationTest {
     void inviteGivesRoleOnRegistration() {
         Response created = post("/admin/users/invite", admin, Map.of("role", "manager"));
         assertThat(created.status()).isEqualTo(201);
-        assertThat(created.body().get("role").asString()).isEqualTo("manager");
         assertThat(created.body().get("clicks").asInt()).isEqualTo(1);
+        assertThat(created.body().get("expiresAt").asString()).isNotBlank();
+        assertThat(created.body().has("code")).isFalse();
+        // Код генерирует сервер — это UUID в ссылке
         String code = codeFrom(created.body());
-        assertThat(code).isEqualTo(created.body().get("code").asString());
         UUID.fromString(code);
 
         Response info = post("/auth/invite/verify", null, Map.of("code", code));
@@ -106,9 +107,12 @@ class AdminIntegrationTest extends IntegrationTest {
     }
 
     @Test
-    void registrationWithoutInviteGivesEmployee() {
-        Response registered = post("/auth/register", null, registration(EMAIL));
-        assertThat(registered.body().get("user").get("role").asString()).isEqualTo("employee");
+    void registrationWithoutInviteIsImpossible() {
+        Response withoutCode = post("/auth/register", null, registration(EMAIL));
+        assertThat(withoutCode.status()).isEqualTo(400);
+        assertThat(withoutCode.code()).isEqualTo("VALIDATION_ERROR");
+        assertThat(post("/auth/register", null, registration(EMAIL, "  ")).status()).isEqualTo(400);
+        assertThat(userRepo.findByEmail(EMAIL)).isEmpty();
     }
 
     @Test
@@ -217,19 +221,13 @@ class AdminIntegrationTest extends IntegrationTest {
     @Test
     void bootstrapPromotesExistingUserWithAdminEmail() {
         jdbc.update("delete from users");
-        post("/auth/register", null, registration("admin@flagman.local"));
+        existingUser("admin@flagman.local", Role.EMPLOYEE);
 
         bootstrap.run(null);
 
         UserEntity user = userRepo.findByEmail("admin@flagman.local").orElseThrow();
         assertThat(user.getRole()).isEqualTo(Role.ADMIN);
         assertThat(login("admin@flagman.local", PASSWORD).status()).isEqualTo(200);
-    }
-
-    private Map<String, Object> registration(String email, String code) {
-        Map<String, Object> body = new LinkedHashMap<>(registration(email));
-        body.put("code", code);
-        return body;
     }
 
     // Пользователь регистрируется сам по приглашению с нужной ролью

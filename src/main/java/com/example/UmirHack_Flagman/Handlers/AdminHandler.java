@@ -52,9 +52,6 @@ public class AdminHandler {
         return ResponseEntity.ok(adminService.getUsers(page, limit, search, roleFilter, status));
     }
 
-    // Приглашения: админ не создает пользователей, он выпускает ссылку,
-    // по которой человек сам регистрируется и получает роль из приглашения
-
     @PostMapping("users/invite")
     public ResponseEntity<InviteResponse> createInvite(
             @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,

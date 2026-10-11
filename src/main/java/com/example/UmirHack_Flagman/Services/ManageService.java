@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -14,6 +16,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -31,6 +34,7 @@ import com.example.UmirHack_Flagman.Entity.StockBatchEntity;
 import com.example.UmirHack_Flagman.Repositories.CustomerOrderRepoDB;
 import com.example.UmirHack_Flagman.Repositories.DeficitRow;
 import com.example.UmirHack_Flagman.Repositories.DeliveryRepoDB;
+import com.example.UmirHack_Flagman.Repositories.DishDayRow;
 import com.example.UmirHack_Flagman.Repositories.DishRepoDB;
 import com.example.UmirHack_Flagman.Repositories.IdCount;
 import com.example.UmirHack_Flagman.Repositories.OrderItemRepoDB;
@@ -39,6 +43,8 @@ import com.example.UmirHack_Flagman.Repositories.StockDeficitRepoDB;
 import com.example.UmirHack_Flagman.Repositories.StockMovementRepoDB;
 import com.example.UmirHack_Flagman.Repositories.WriteOffRow;
 import com.example.UmirHack_Flagman.models.AllDeliveryResponse;
+import com.example.UmirHack_Flagman.models.DailyDishesResponse;
+import com.example.UmirHack_Flagman.models.DailyIngredientsResponse;
 import com.example.UmirHack_Flagman.models.DeficitsResponse;
 import com.example.UmirHack_Flagman.models.OrderList;
 import com.example.UmirHack_Flagman.models.StockForecastResponse;
@@ -61,10 +67,13 @@ public class ManageService {
     private final StockDeficitRepoDB deficitRepo;
     private final DishRepoDB dishRepo;
     private final ConsumptionStats consumptionStats;
+    private final ZoneId zone;
 
     public ManageService(DeliveryRepoDB deliveryRepo, StockBatchRepoDB batchRepo, CustomerOrderRepoDB orderRepo,
             OrderItemRepoDB orderItemRepo, StockMovementRepoDB movementRepo, StockDeficitRepoDB deficitRepo,
-            DishRepoDB dishRepo, ConsumptionStats consumptionStats) {
+            DishRepoDB dishRepo, ConsumptionStats consumptionStats,
+            @Value("${app.analytics.zone:Europe/Moscow}") ZoneId zone) {
+        this.zone = zone;
         this.deliveryRepo = deliveryRepo;
         this.batchRepo = batchRepo;
         this.orderRepo = orderRepo;
@@ -73,6 +82,59 @@ public class ManageService {
         this.deficitRepo = deficitRepo;
         this.dishRepo = dishRepo;
         this.consumptionStats = consumptionStats;
+    }
+
+    // Дневная статистика. День считается в часовом поясе ресторана (app.analytics.zone)
+
+    public DailyDishesResponse getDailyDishes(LocalDate date) {
+        DayRange day = dayRange(date);
+        List<DishDayRow> rows = orderItemRepo.salesByDish(day.from(), day.to(), OrderStatus.CONFIRMED);
+
+        DailyDishesResponse response = new DailyDishesResponse();
+        response.setDate(day.date());
+        response.setFrom(day.from());
+        response.setTo(day.to());
+        response.setItems(rows.stream().map(r -> {
+            DailyDishesResponse.Item item = new DailyDishesResponse.Item();
+            item.setDishId(r.getDishId());
+            item.setDishName(r.getDishName());
+            item.setPortions(r.getPortions());
+            item.setOrders(r.getOrders());
+            return item;
+        }).toList());
+        response.setTotalPortions(rows.stream().mapToLong(DishDayRow::getPortions).sum());
+        response.setTotalOrders(orderRepo.countByStatusAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                OrderStatus.CONFIRMED, day.from(), day.to()));
+        return response;
+    }
+
+    public DailyIngredientsResponse getDailyIngredients(LocalDate date) {
+        DayRange day = dayRange(date);
+
+        DailyIngredientsResponse response = new DailyIngredientsResponse();
+        response.setDate(day.date());
+        response.setFrom(day.from());
+        response.setTo(day.to());
+        response.setItems(movementRepo.usageByIngredient(day.from(), day.to(),
+                MovementType.ORDER_CONSUMPTION, MovementType.EXPIRED_WRITE_OFF).stream().map(r -> {
+            DailyIngredientsResponse.Item item = new DailyIngredientsResponse.Item();
+            item.setIngredientId(r.getIngredientId());
+            item.setIngredientName(r.getIngredientName());
+            item.setUnit(r.getUnit());
+            item.setConsumedQuantity(r.getConsumed());
+            item.setWrittenOffQuantity(r.getWrittenOff());
+            item.setTotalQuantity(r.getConsumed().add(r.getWrittenOff()));
+            return item;
+        }).toList());
+        return response;
+    }
+
+    private record DayRange(LocalDate date, Instant from, Instant to) {
+    }
+
+    private DayRange dayRange(LocalDate date) {
+        LocalDate day = date != null ? date : LocalDate.now(zone);
+        return new DayRange(day, day.atStartOfDay(zone).toInstant(), day.plusDays(1).atStartOfDay(zone).toInstant());
     }
 
     // Поставки

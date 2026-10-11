@@ -5,13 +5,17 @@ import static org.assertj.core.api.Assertions.within;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.example.UmirHack_Flagman.Entity.DishEntity;
 import com.example.UmirHack_Flagman.Entity.IngredientEntity;
+import com.example.UmirHack_Flagman.Services.ExpiryMonitor;
 import com.example.UmirHack_Flagman.models.Role;
 import com.example.UmirHack_Flagman.support.IntegrationTest;
 
@@ -22,6 +26,9 @@ class ManagerAnalyticsTest extends IntegrationTest {
     private String employee;
     private IngredientEntity cheese;
     private DishEntity pizza;
+
+    @Autowired
+    private ExpiryMonitor expiryMonitor;
 
     @BeforeEach
     void setUp() {
@@ -85,5 +92,42 @@ class ManagerAnalyticsTest extends IntegrationTest {
         assertThat(get("/analytics/write-offs", employee).status()).isEqualTo(403);
         assertThat(get("/analytics/stock-forecast", employee).status()).isEqualTo(403);
         assertThat(get("/deliveries", employee).status()).isEqualTo(403);
+    }
+
+    @Test
+    void dailyDishesAndIngredients() {
+        DishEntity bread = dish("Сырный хлеб", cheese, 50);
+        stock(manager, cheese, 1000, Duration.ofDays(5));
+        expiredBatch(cheese, 200);
+        post("/orders", employee, orderOf("POS-1", pizza, 2));
+        post("/orders", employee, orderOf("POS-2", pizza, 1, bread, 3));
+        // Отказ из-за нехватки в статистику не попадает
+        assertThat(post("/orders", employee, orderOf("POS-3", pizza, 50)).status()).isEqualTo(409);
+        expiryMonitor.run(Instant.now());
+
+        String today = LocalDate.now(ZoneId.of("Europe/Moscow")).toString();
+
+        JsonNode dishes = get("/analytics/daily/dishes?date=" + today, manager).body();
+        assertThat(dishes.get("date").asString()).isEqualTo(today);
+        assertThat(dishes.get("totalOrders").asInt()).isEqualTo(2);
+        assertThat(dishes.get("totalPortions").asInt()).isEqualTo(6);
+        JsonNode margherita = dishes.get("items").get(0);
+        assertThat(margherita.get("dishName").asString()).isEqualTo("Маргарита");
+        assertThat(margherita.get("portions").asInt()).isEqualTo(3);
+        assertThat(margherita.get("orders").asInt()).isEqualTo(2);
+        assertThat(dishes.get("items").get(1).get("portions").asInt()).isEqualTo(3);
+
+        JsonNode usage = get("/analytics/daily/ingredients", manager).body().get("items").get(0);
+        assertThat(usage.get("ingredientName").asString()).isEqualTo("Моцарелла");
+        assertThat(usage.get("consumedQuantity").decimalValue()).isEqualByComparingTo("510");
+        assertThat(usage.get("writtenOffQuantity").decimalValue()).isEqualByComparingTo("200");
+        assertThat(usage.get("totalQuantity").decimalValue()).isEqualByComparingTo("710");
+
+        String yesterday = LocalDate.parse(today).minusDays(1).toString();
+        assertThat(get("/analytics/daily/dishes?date=" + yesterday, manager).body().get("items").size()).isZero();
+        assertThat(get("/analytics/daily/ingredients?date=" + yesterday, manager).body().get("items").size()).isZero();
+
+        assertThat(get("/analytics/daily/dishes", employee).status()).isEqualTo(403);
+        assertThat(get("/analytics/daily/ingredients?date=11.10.2026", manager).status()).isEqualTo(400);
     }
 }

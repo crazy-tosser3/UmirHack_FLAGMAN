@@ -10,5 +10,5 @@ headers:
 auth:
   type: bearer
   credentials:
-    token: ""
+    token: "{{accessToken}}"
 order: 3362643430874549

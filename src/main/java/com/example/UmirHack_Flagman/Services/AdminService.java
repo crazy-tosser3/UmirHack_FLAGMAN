@@ -79,7 +79,6 @@ public class AdminService {
         return response;
     }
 
-    // Админ не создает пользователей: он выпускает ссылку, по которой человек регистрируется сам с ролью из приглашения
     public InviteResponse createInvite(CreateInvite data) {
         Instant now = Instant.now();
         Instant expiresAt = data.getExpiresAt() != null ? data.getExpiresAt() : now.plus(inviteTtl);
@@ -96,9 +95,7 @@ public class AdminService {
                 code, data.getRole().name().toLowerCase(Locale.ROOT), expiresAt.toString(), clicks);
 
         InviteResponse response = new InviteResponse();
-        response.setCode(code);
         response.setInviteUrl(invite.url());
-        response.setRole(data.getRole());
         response.setExpiresAt(invite.expiresAt());
         response.setClicks(clicks);
         return response;

@@ -138,7 +138,6 @@ public class InventoryHandler {
         return ResponseEntity.ok(stockService.getStock(ingredientId, search, page, limit));
     }
 
-    // expiryStatus: valid | expiring | expired | all
     @GetMapping("stock/batches")
     public ResponseEntity<StockBatchesResponse> getStockBatches(
             @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,

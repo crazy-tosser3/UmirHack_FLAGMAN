@@ -1,0 +1,15 @@
+$kind: http-request
+description: "active | blocked. Блокировка сразу отзывает все сессии пользователя."
+url: "{{baseUrl}}/api/v1/admin/users/{{userId}}/status"
+method: PATCH
+body:
+  type: json
+  content: |-
+    {
+        "status": "blocked"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 7000

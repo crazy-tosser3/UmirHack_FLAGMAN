@@ -1,0 +1,23 @@
+$kind: http-request
+description: "Проверяет остатки и списывает по FEFO. При нехватке — 409 INSUFFICIENT_STOCK. externalOrderId уникален."
+url: "{{baseUrl}}/api/v1/orders"
+method: POST
+headers:
+  Idempotency-Key: "order-POS-10001"
+body:
+  type: json
+  content: |-
+    {
+        "externalOrderId": "POS-10001",
+        "items": [
+            {
+                "dishId": "{{dishId}}",
+                "quantity": 2
+            }
+        ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 18000

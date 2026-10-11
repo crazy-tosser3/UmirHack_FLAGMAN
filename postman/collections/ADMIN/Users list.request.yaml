@@ -1,0 +1,9 @@
+$kind: http-request
+description: "Список пользователей. role: admin|manager|employee, status: active|blocked. Пустые параметры можно удалить."
+url: "{{baseUrl}}/api/v1/admin/users?page=1&limit=20&search=&role=&status="
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 3000

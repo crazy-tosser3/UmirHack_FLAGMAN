@@ -21,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -35,6 +36,7 @@ import com.example.UmirHack_Flagman.Repositories.DishRepoDB;
 import com.example.UmirHack_Flagman.Repositories.IngredientRepoDB;
 import com.example.UmirHack_Flagman.Repositories.StockBatchRepoDB;
 import com.example.UmirHack_Flagman.Repositories.UserRepoDB;
+import com.example.UmirHack_Flagman.Services.InviteService;
 import com.example.UmirHack_Flagman.models.Role;
 
 import tools.jackson.databind.JsonNode;
@@ -74,6 +76,10 @@ public abstract class IntegrationTest {
     protected UserRepoDB userRepo;
     @Autowired
     private PlatformTransactionManager txManager;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    @Autowired
+    private InviteService inviteService;
 
     private final HttpClient http = HttpClient.newHttpClient();
 
@@ -154,14 +160,29 @@ public abstract class IntegrationTest {
         return post("/auth/login", null, Map.of("email", email, "password", password));
     }
 
+    protected Map<String, Object> registration(String email, String code) {
+        Map<String, Object> body = new LinkedHashMap<>(registration(email));
+        body.put("code", code);
+        return body;
+    }
+
+    // Без кода регистрация закрыта, поэтому тестовые пользователи создаются напрямую в БД с паролем PASSWORD
+    protected UserEntity existingUser(String email, Role role) {
+        UserEntity user = new UserEntity("Тест", email, passwordEncoder.encode(PASSWORD));
+        user.setRole(role);
+        return userRepo.save(user);
+    }
+
+    // Код приглашения в обход админского API — для тестов самой регистрации
+    protected String inviteCode(Role role) {
+        String code = UUID.randomUUID().toString();
+        inviteService.create(code, role.name().toLowerCase(), Instant.now().plus(Duration.ofHours(1)).toString(), 0);
+        return code;
+    }
+
     protected String tokenFor(Role role) {
         String email = role.name().toLowerCase() + "-" + UUID.randomUUID() + "@test.local";
-        post("/auth/register", null, registration(email));
-        if (role != Role.EMPLOYEE) {
-            UserEntity user = userRepo.findByEmail(email).orElseThrow();
-            user.setRole(role);
-            userRepo.save(user);
-        }
+        existingUser(email, role);
         return login(email, PASSWORD).body().get("accessToken").asString();
     }
 

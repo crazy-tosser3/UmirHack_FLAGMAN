@@ -50,10 +50,8 @@ public class AuthService {
         }
 
         // Код расходуется только после проверки email, чтобы неудачная регистрация не съедала использование ссылки
-        Role role = Role.EMPLOYEE;
-        if (data.getCode() != null && !data.getCode().isBlank()) {
-            role = inviteService.consume(data.getCode().trim()).map(AuthService::parseRole).orElseThrow(AuthService::inviteNotFound);
-        }
+        Role role = inviteService.consume(data.getCode().trim()).map(AuthService::parseRole)
+                .orElseThrow(AuthService::inviteNotFound);
 
         String hashPassword = passwordEncoder.encode(data.getPassword());
         UserEntity newUser = new UserEntity(data.getName().trim(), email, hashPassword);
