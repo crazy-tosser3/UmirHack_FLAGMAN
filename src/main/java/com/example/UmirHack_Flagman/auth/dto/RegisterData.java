@@ -15,7 +15,7 @@ public class RegisterData {
     private String email;
 
     @NotBlank
-    @Size(min = 12, max = 128)
+    @Size(min = 8, max = 128)
     private String password;
 
     @NotBlank

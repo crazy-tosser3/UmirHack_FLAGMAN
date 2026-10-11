@@ -254,7 +254,7 @@ def main():
         random.seed(args.seed)
 
     api = Api(args.base_url)
-    login(api, "crazytosser4@gmail.com", "111111111111")
+    login(api, "admin@yandex.ru", "adminadmin1234")
 
     ingredients = api.get_all("/ingredients")
     dishes = api.get_all("/dishes")
