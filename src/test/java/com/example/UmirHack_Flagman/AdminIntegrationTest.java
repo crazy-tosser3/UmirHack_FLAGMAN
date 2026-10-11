@@ -2,6 +2,9 @@ package com.example.UmirHack_Flagman;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,86 +44,87 @@ class AdminIntegrationTest extends IntegrationTest {
     }
 
     @Test
-    void invitedUserSetsPasswordByLinkAndIsLoggedIn() {
-        Response created = post("/admin/users", admin, newUser(EMAIL, "manager"));
+    void inviteGivesRoleOnRegistration() {
+        Response created = post("/admin/users/invite", admin, Map.of("role", "manager"));
         assertThat(created.status()).isEqualTo(201);
-        assertThat(created.body().get("user").get("status").asString()).isEqualTo("pending");
-        String token = tokenFrom(created.body().get("invite"));
+        assertThat(created.body().get("role").asString()).isEqualTo("manager");
+        assertThat(created.body().get("clicks").asInt()).isEqualTo(1);
+        String code = codeFrom(created.body());
+        assertThat(code).isEqualTo(created.body().get("code").asString());
+        UUID.fromString(code);
 
-        // До принятия приглашения войти нельзя — пароля еще нет
-        assertThat(login(EMAIL, PASSWORD).code()).isEqualTo("INVALID_CREDENTIALS");
-
-        Response info = post("/auth/invite/verify", null, Map.of("token", token));
+        Response info = post("/auth/invite/verify", null, Map.of("code", code));
         assertThat(info.status()).isEqualTo(200);
-        assertThat(info.body().get("email").asString()).isEqualTo(EMAIL);
         assertThat(info.body().get("role").asString()).isEqualTo("manager");
+        assertThat(info.body().get("remainingClicks").asInt()).isEqualTo(1);
 
-        Response accepted = post("/auth/invite/accept", null, Map.of("token", token, "password", PASSWORD));
-        assertThat(accepted.status()).isEqualTo(200);
-        assertThat(accepted.cookie("refresh_token")).contains("HttpOnly");
-        assertThat(get("/stock", accepted.body().get("accessToken").asString()).status()).isEqualTo(200);
+        Response registered = post("/auth/register", null, registration(EMAIL, code));
+        assertThat(registered.status()).isEqualTo(201);
+        assertThat(registered.body().get("user").get("role").asString()).isEqualTo("manager");
+        assertThat(get("/stock", login(EMAIL, PASSWORD).body().get("accessToken").asString()).status()).isEqualTo(200);
 
-        assertThat(login(EMAIL, PASSWORD).status()).isEqualTo(200);
-        assertThat(get("/admin/users/" + created.body().get("user").get("id").asString(), admin)
-                .body().get("status").asString()).isEqualTo("active");
-    }
-
-    @Test
-    void inviteLinkWorksOnlyOnce() {
-        String token = tokenFrom(post("/admin/users", admin, newUser(EMAIL, "employee")).body().get("invite"));
-
-        assertThat(post("/auth/invite/accept", null, Map.of("token", token, "password", "short")).status()).isEqualTo(400);
-        assertThat(post("/auth/invite/accept", null, Map.of("token", token, "password", PASSWORD)).status()).isEqualTo(200);
-
-        Response reused = post("/auth/invite/accept", null, Map.of("token", token, "password", "Another-password-1"));
+        Response reused = post("/auth/register", null, registration("second@test.local", code));
         assertThat(reused.status()).isEqualTo(404);
         assertThat(reused.code()).isEqualTo("INVITE_NOT_FOUND");
-        assertThat(post("/auth/invite/verify", null, Map.of("token", token)).status()).isEqualTo(404);
-        assertThat(post("/auth/invite/verify", null, Map.of("token", "garbage")).status()).isEqualTo(404);
+        assertThat(post("/auth/invite/verify", null, Map.of("code", code)).status()).isEqualTo(404);
     }
 
     @Test
-    void resendingInviteInvalidatesPreviousLink() {
-        Response created = post("/admin/users", admin, newUser(EMAIL, "employee"));
-        String id = created.body().get("user").get("id").asString();
-        String first = tokenFrom(created.body().get("invite"));
+    void multiUseAndUnlimitedInvites() {
+        String twice = codeFrom(post("/admin/users/invite", admin, Map.of("role", "employee", "clicks", 2)).body());
+        assertThat(post("/auth/register", null, registration("a@test.local", twice)).status()).isEqualTo(201);
+        assertThat(post("/auth/invite/verify", null, Map.of("code", twice)).body().get("remainingClicks").asInt()).isEqualTo(1);
+        assertThat(post("/auth/register", null, registration("b@test.local", twice)).status()).isEqualTo(201);
+        assertThat(post("/auth/register", null, registration("c@test.local", twice)).status()).isEqualTo(404);
 
-        Response resent = post("/admin/users/" + id + "/invite", admin, null);
-        assertThat(resent.status()).isEqualTo(200);
-        String second = tokenFrom(resent.body());
-
-        assertThat(post("/auth/invite/verify", null, Map.of("token", first)).status()).isEqualTo(404);
-        assertThat(post("/auth/invite/accept", null, Map.of("token", second, "password", PASSWORD)).status()).isEqualTo(200);
-        assertThat(post("/admin/users/" + id + "/invite", admin, null).code()).isEqualTo("USER_ALREADY_ACTIVATED");
+        String unlimited = codeFrom(post("/admin/users/invite", admin, Map.of("role", "employee", "clicks", 0)).body());
+        for (String email : List.of("d@test.local", "e@test.local", "f@test.local")) {
+            assertThat(post("/auth/register", null, registration(email, unlimited)).status()).isEqualTo(201);
+        }
+        assertThat(post("/auth/invite/verify", null, Map.of("code", unlimited)).body().get("remainingClicks").isNull()).isTrue();
     }
 
     @Test
-    void blockingPendingUserCancelsInvite() {
-        Response created = post("/admin/users", admin, newUser(EMAIL, "employee"));
-        String id = created.body().get("user").get("id").asString();
-        String token = tokenFrom(created.body().get("invite"));
+    void failedRegistrationDoesNotSpendInvite() {
+        createUser(EMAIL, "employee");
+        String code = codeFrom(post("/admin/users/invite", admin, Map.of("role", "manager")).body());
 
-        patch("/admin/users/" + id + "/status", Map.of("status", "blocked"));
-        assertThat(post("/auth/invite/verify", null, Map.of("token", token)).status()).isEqualTo(404);
-        assertThat(post("/admin/users/" + id + "/invite", admin, null).code()).isEqualTo("USER_BLOCKED");
-
-        // Без пароля аккаунт не может стать активным — после разблокировки снова ждет приглашения
-        Response unblocked = patch("/admin/users/" + id + "/status", Map.of("status", "active"));
-        assertThat(unblocked.body().get("status").asString()).isEqualTo("pending");
-        String fresh = tokenFrom(post("/admin/users/" + id + "/invite", admin, null).body());
-        assertThat(post("/auth/invite/accept", null, Map.of("token", fresh, "password", PASSWORD)).status()).isEqualTo(200);
+        // Email занят — код не должен расходоваться
+        assertThat(post("/auth/register", null, registration(EMAIL, code)).code()).isEqualTo("EMAIL_ALREADY_EXISTS");
+        assertThat(post("/auth/register", null, registration("free@test.local", code)).status()).isEqualTo(201);
     }
 
     @Test
-    void createValidation() {
-        post("/admin/users", admin, newUser(EMAIL, "manager"));
+    void revokedAndUnknownInvitesAreRejected() {
+        String code = codeFrom(post("/admin/users/invite", admin, Map.of("role", "admin")).body());
 
-        Response duplicate = post("/admin/users", admin, newUser(EMAIL.toUpperCase(), "employee"));
-        assertThat(duplicate.status()).isEqualTo(409);
-        assertThat(duplicate.code()).isEqualTo("USER_ALREADY_EXISTS");
+        assertThat(send("DELETE", "/admin/users/invite/" + code, admin, null).status()).isEqualTo(204);
+        assertThat(post("/auth/register", null, registration(EMAIL, code)).code()).isEqualTo("INVITE_NOT_FOUND");
+        assertThat(post("/auth/register", null, registration(EMAIL, UUID.randomUUID().toString())).code())
+                .isEqualTo("INVITE_NOT_FOUND");
+        assertThat(userRepo.findByEmail(EMAIL)).isEmpty();
+    }
 
-        assertThat(post("/admin/users", admin, newUser("other@test.local", "superuser")).status()).isEqualTo(400);
-        assertThat(post("/admin/users", admin, Map.of("name", "Иван", "email", "bad", "role", "employee")).status()).isEqualTo(400);
+    @Test
+    void registrationWithoutInviteGivesEmployee() {
+        Response registered = post("/auth/register", null, registration(EMAIL));
+        assertThat(registered.body().get("user").get("role").asString()).isEqualTo("employee");
+    }
+
+    @Test
+    void inviteValidation() {
+        assertThat(post("/admin/users/invite", admin, Map.of("role", "superuser")).status()).isEqualTo(400);
+        assertThat(post("/admin/users/invite", admin, Map.of()).status()).isEqualTo(400);
+        assertThat(post("/admin/users/invite", admin, Map.of("role", "employee", "clicks", -1)).status()).isEqualTo(400);
+        assertThat(post("/admin/users/invite", admin, Map.of("role", "employee", "expiresAt", "2020-01-01T00:00:00Z")).status())
+                .isEqualTo(400);
+        assertThat(post("/admin/users/invite", admin, Map.of("role", "employee", "expiresAt", "2099-01-01T00:00:00Z")).status())
+                .isEqualTo(400);
+        assertThat(post("/admin/users/invite", tokenFor(Role.MANAGER), Map.of("role", "employee")).status()).isEqualTo(403);
+
+        Instant custom = Instant.now().plus(Duration.ofDays(3)).truncatedTo(ChronoUnit.SECONDS);
+        Response created = post("/admin/users/invite", admin, Map.of("role", "employee", "expiresAt", custom.toString()));
+        assertThat(Instant.parse(created.body().get("expiresAt").asString())).isEqualTo(custom);
     }
 
     @Test
@@ -222,25 +226,23 @@ class AdminIntegrationTest extends IntegrationTest {
         assertThat(login("admin@flagman.local", PASSWORD).status()).isEqualTo(200);
     }
 
-    private Map<String, Object> newUser(String email, String role) {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("name", "Иван");
-        body.put("email", email);
-        body.put("role", role);
+    private Map<String, Object> registration(String email, String code) {
+        Map<String, Object> body = new LinkedHashMap<>(registration(email));
+        body.put("code", code);
         return body;
     }
 
-    // Создает пользователя и сразу принимает приглашение с паролем PASSWORD
+    // Пользователь регистрируется сам по приглашению с нужной ролью
     private UUID createUser(String email, String role) {
-        JsonNode created = post("/admin/users", admin, newUser(email, role)).body();
-        post("/auth/invite/accept", null, Map.of("token", tokenFrom(created.get("invite")), "password", PASSWORD));
-        return UUID.fromString(created.get("user").get("id").asString());
+        String code = codeFrom(post("/admin/users/invite", admin, Map.of("role", role)).body());
+        post("/auth/register", null, registration(email, code));
+        return userRepo.findByEmail(email).orElseThrow().getId();
     }
 
-    private static String tokenFrom(JsonNode invite) {
+    private static String codeFrom(JsonNode invite) {
         String url = invite.get("inviteUrl").asString();
-        assertThat(url).startsWith("http://localhost:5173/accept-invite?token=");
-        return url.substring(url.indexOf("token=") + "token=".length());
+        assertThat(url).startsWith("http://localhost:5173/register?code=");
+        return url.substring(url.indexOf("code=") + "code=".length());
     }
 
     private UUID adminId() {

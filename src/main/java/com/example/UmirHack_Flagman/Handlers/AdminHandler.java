@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,8 +20,7 @@ import com.example.UmirHack_Flagman.Config.Roles;
 import com.example.UmirHack_Flagman.Services.AdminService;
 import com.example.UmirHack_Flagman.models.ChangeRole;
 import com.example.UmirHack_Flagman.models.ChangeStatus;
-import com.example.UmirHack_Flagman.models.CreateUserData;
-import com.example.UmirHack_Flagman.models.CreatedUserResponse;
+import com.example.UmirHack_Flagman.models.CreateInvite;
 import com.example.UmirHack_Flagman.models.InviteResponse;
 import com.example.UmirHack_Flagman.models.UpdateUserData;
 import com.example.UmirHack_Flagman.models.UserChangeResponse;
@@ -52,21 +52,24 @@ public class AdminHandler {
         return ResponseEntity.ok(adminService.getUsers(page, limit, search, roleFilter, status));
     }
 
-    // Возвращает ссылку-приглашение: админ пересылает ее пользователю, тот задает пароль сам
-    @PostMapping("users")
-    public ResponseEntity<CreatedUserResponse> createUser(
+    // Приглашения: админ не создает пользователей, он выпускает ссылку,
+    // по которой человек сам регистрируется и получает роль из приглашения
+
+    @PostMapping("users/invite")
+    public ResponseEntity<InviteResponse> createInvite(
             @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
-            @Valid @RequestBody CreateUserData req) {
+            @Valid @RequestBody CreateInvite req) {
         Roles.require(role, Roles.ADMIN);
-        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createUser(req));
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createInvite(req));
     }
 
-    @PostMapping("users/{userId}/invite")
-    public ResponseEntity<InviteResponse> resendInvite(
+    @DeleteMapping("users/invite/{code}")
+    public ResponseEntity<Void> revokeInvite(
             @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
-            @PathVariable UUID userId) {
+            @PathVariable String code) {
         Roles.require(role, Roles.ADMIN);
-        return ResponseEntity.ok(adminService.resendInvite(userId));
+        adminService.revokeInvite(code);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("users/{userId}")

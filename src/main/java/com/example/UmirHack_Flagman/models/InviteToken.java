@@ -9,6 +9,6 @@ import lombok.Setter;
 @Getter
 public class InviteToken {
     @NotBlank
-    @Size(max = 200)
-    private String token;
+    @Size(max = 100)
+    private String code;
 }

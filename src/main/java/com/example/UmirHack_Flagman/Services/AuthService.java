@@ -1,23 +1,21 @@
 package com.example.UmirHack_Flagman.Services;
 
 import java.util.Locale;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.example.UmirHack_Flagman.Entity.UserEntity;
 import com.example.UmirHack_Flagman.Exceptions.ApiException;
 import com.example.UmirHack_Flagman.Repositories.UserRepoDB;
-import com.example.UmirHack_Flagman.models.AcceptInviteData;
 import com.example.UmirHack_Flagman.models.InviteInfo;
 import com.example.UmirHack_Flagman.models.LoginData;
 import com.example.UmirHack_Flagman.models.LoginResponse;
 import com.example.UmirHack_Flagman.models.RegisterData;
+import com.example.UmirHack_Flagman.models.Role;
 import com.example.UmirHack_Flagman.models.TokenResponse;
 import com.example.UmirHack_Flagman.models.UserResponse;
 import com.example.UmirHack_Flagman.models.UserStatus;
@@ -51,8 +49,15 @@ public class AuthService {
             throw emailExists();
         }
 
+        // Код расходуется только после проверки email, чтобы неудачная регистрация не съедала использование ссылки
+        Role role = Role.EMPLOYEE;
+        if (data.getCode() != null && !data.getCode().isBlank()) {
+            role = inviteService.consume(data.getCode().trim()).map(AuthService::parseRole).orElseThrow(AuthService::inviteNotFound);
+        }
+
         String hashPassword = passwordEncoder.encode(data.getPassword());
         UserEntity newUser = new UserEntity(data.getName().trim(), email, hashPassword);
+        newUser.setRole(role);
 
         try {
             return toResponse(userRepository.saveAndFlush(newUser));
@@ -73,32 +78,28 @@ public class AuthService {
         return startSession(user);
     }
 
-    public InviteInfo inviteInfo(String token) {
-        UserEntity user = invitedUser(inviteService.find(token));
+    public InviteInfo inviteInfo(String code) {
+        String trimmed = code.trim();
+        Role role = inviteService.find(trimmed).map(AuthService::parseRole).orElseThrow(AuthService::inviteNotFound);
+
         InviteInfo info = new InviteInfo();
-        info.setEmail(user.getEmail());
-        info.setName(user.getName());
-        info.setRole(user.getRole());
-        info.setExpiresAt(inviteService.expiresAt(token).orElse(null));
+        info.setRole(role);
+        info.setExpiresAt(inviteService.expiresAt(trimmed).orElse(null));
+        info.setRemainingClicks(inviteService.remainingClicks(trimmed).filter(c -> c > 0).orElse(null));
         return info;
     }
 
-    // Пользователь задает пароль по ссылке и сразу входит
-    @Transactional
-    public Session<LoginResponse> acceptInvite(AcceptInviteData data) {
-        invitedUser(inviteService.find(data.getToken()));
-        UserEntity user = invitedUser(inviteService.consume(data.getToken()));
-        user.setPasswordHash(passwordEncoder.encode(data.getPassword()));
-        user.setStatus(UserStatus.ACTIVE);
-        userRepository.save(user);
-        return startSession(user);
+    private static Role parseRole(String role) {
+        try {
+            return Role.valueOf(role.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw inviteNotFound();
+        }
     }
 
-    private UserEntity invitedUser(Optional<UUID> userId) {
-        return userId.flatMap(userRepository::findById)
-                .filter(u -> u.getStatus() == UserStatus.PENDING_VERIFICATION)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "INVITE_NOT_FOUND",
-                        "Приглашение недействительно, уже использовано или истекло"));
+    private static ApiException inviteNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "INVITE_NOT_FOUND",
+                "Приглашение недействительно, уже использовано или истекло");
     }
 
     private Session<LoginResponse> startSession(UserEntity user) {

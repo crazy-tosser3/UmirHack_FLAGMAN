@@ -1,10 +1,13 @@
 package com.example.UmirHack_Flagman.Services;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -16,8 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.UmirHack_Flagman.Entity.UserEntity;
 import com.example.UmirHack_Flagman.Exceptions.ApiException;
 import com.example.UmirHack_Flagman.Repositories.UserRepoDB;
-import com.example.UmirHack_Flagman.models.CreateUserData;
-import com.example.UmirHack_Flagman.models.CreatedUserResponse;
+import com.example.UmirHack_Flagman.models.CreateInvite;
 import com.example.UmirHack_Flagman.models.InviteResponse;
 import com.example.UmirHack_Flagman.models.Role;
 import com.example.UmirHack_Flagman.models.UpdateUserData;
@@ -33,11 +35,16 @@ public class AdminService {
     private final UserRepoDB userRepo;
     private final RefreshTokenService refreshTokenService;
     private final InviteService inviteService;
+    private final Duration inviteTtl;
 
-    public AdminService(UserRepoDB userRepo, RefreshTokenService refreshTokenService, InviteService inviteService) {
+    private static final Duration MAX_INVITE_TTL = Duration.ofDays(30);
+
+    public AdminService(UserRepoDB userRepo, RefreshTokenService refreshTokenService, InviteService inviteService,
+            @Value("${app.invite.ttl:48h}") Duration inviteTtl) {
         this.userRepo = userRepo;
         this.refreshTokenService = refreshTokenService;
         this.inviteService = inviteService;
+        this.inviteTtl = inviteTtl;
     }
 
     @Transactional(readOnly = true)
@@ -72,38 +79,33 @@ public class AdminService {
         return response;
     }
 
-    @Transactional
-    public CreatedUserResponse createUser(CreateUserData data) {
-        String email = normalizeEmail(data.getEmail());
-        if (userRepo.existsByEmail(email)) {
-            throw userExists();
+    // Админ не создает пользователей: он выпускает ссылку, по которой человек регистрируется сам с ролью из приглашения
+    public InviteResponse createInvite(CreateInvite data) {
+        Instant now = Instant.now();
+        Instant expiresAt = data.getExpiresAt() != null ? data.getExpiresAt() : now.plus(inviteTtl);
+        if (!expiresAt.isAfter(now)) {
+            throw Paging.validation("expiresAt должен быть в будущем");
         }
-        UserEntity user = new UserEntity(data.getName().trim(), email, null);
-        user.setRole(data.getRole());
-        user.setStatus(UserStatus.PENDING_VERIFICATION);
-        try {
-            userRepo.saveAndFlush(user);
-        } catch (DataIntegrityViolationException e) {
-            throw userExists();
+        if (expiresAt.isAfter(now.plus(MAX_INVITE_TTL))) {
+            throw Paging.validation("expiresAt — не позже чем через " + MAX_INVITE_TTL.toDays() + " дней");
         }
+        int clicks = data.getClicks() != null ? data.getClicks() : 1;
+        String code = UUID.randomUUID().toString();
 
-        CreatedUserResponse response = new CreatedUserResponse();
-        response.setUser(toResponse(user));
-        response.setInvite(toInvite(inviteService.create(user.getId())));
+        InviteService.Invite invite = inviteService.create(
+                code, data.getRole().name().toLowerCase(Locale.ROOT), expiresAt.toString(), clicks);
+
+        InviteResponse response = new InviteResponse();
+        response.setCode(code);
+        response.setInviteUrl(invite.url());
+        response.setRole(data.getRole());
+        response.setExpiresAt(invite.expiresAt());
+        response.setClicks(clicks);
         return response;
     }
 
-    // Новая ссылка отменяет предыдущую
-    @Transactional(readOnly = true)
-    public InviteResponse resendInvite(UUID userId) {
-        UserEntity user = find(userId);
-        if (user.getPasswordHash() != null) {
-            throw new ApiException(HttpStatus.CONFLICT, "USER_ALREADY_ACTIVATED", "Пользователь уже активировал аккаунт");
-        }
-        if (user.getStatus() == UserStatus.DISABLED) {
-            throw new ApiException(HttpStatus.CONFLICT, "USER_BLOCKED", "Пользователь заблокирован");
-        }
-        return toInvite(inviteService.create(user.getId()));
+    public void revokeInvite(String code) {
+        inviteService.revoke(code);
     }
 
     @Transactional(readOnly = true)
@@ -164,7 +166,6 @@ public class AdminService {
         userRepo.saveAndFlush(user);
         if (newStatus == UserStatus.DISABLED) {
             refreshTokenService.revokeAll(user.getId());
-            inviteService.revoke(user.getId());
         }
 
         UserChangeResponse response = new UserChangeResponse();
@@ -181,13 +182,6 @@ public class AdminService {
             throw new ApiException(HttpStatus.CONFLICT, "LAST_ADMIN_REQUIRED",
                     "Нельзя понизить или заблокировать последнего активного администратора");
         }
-    }
-
-    private static InviteResponse toInvite(InviteService.Invite invite) {
-        InviteResponse response = new InviteResponse();
-        response.setInviteUrl(invite.url());
-        response.setExpiresAt(invite.expiresAt());
-        return response;
     }
 
     private UserEntity find(UUID userId) {
