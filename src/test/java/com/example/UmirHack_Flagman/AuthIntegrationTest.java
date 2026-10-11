@@ -6,9 +6,9 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.example.UmirHack_Flagman.Entity.UserEntity;
-import com.example.UmirHack_Flagman.models.UserStatus;
-import com.example.UmirHack_Flagman.models.Role;
+import com.example.UmirHack_Flagman.auth.UserEntity;
+import com.example.UmirHack_Flagman.auth.dto.Role;
+import com.example.UmirHack_Flagman.auth.dto.UserStatus;
 import com.example.UmirHack_Flagman.support.IntegrationTest;
 
 class AuthIntegrationTest extends IntegrationTest {

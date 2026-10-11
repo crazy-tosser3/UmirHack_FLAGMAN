@@ -14,9 +14,9 @@ import java.util.concurrent.Future;
 
 import org.junit.jupiter.api.Test;
 
-import com.example.UmirHack_Flagman.Entity.DishEntity;
-import com.example.UmirHack_Flagman.Entity.IngredientEntity;
-import com.example.UmirHack_Flagman.models.Role;
+import com.example.UmirHack_Flagman.auth.dto.Role;
+import com.example.UmirHack_Flagman.catalog.DishEntity;
+import com.example.UmirHack_Flagman.catalog.IngredientEntity;
 import com.example.UmirHack_Flagman.support.IntegrationTest;
 
 class ConcurrentOrdersTest extends IntegrationTest {

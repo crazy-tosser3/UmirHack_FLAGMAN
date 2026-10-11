@@ -1,0 +1,103 @@
+package com.example.UmirHack_Flagman.auth;
+
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.UmirHack_Flagman.auth.dto.ChangeRole;
+import com.example.UmirHack_Flagman.auth.dto.ChangeStatus;
+import com.example.UmirHack_Flagman.auth.dto.CreateInvite;
+import com.example.UmirHack_Flagman.auth.dto.InviteResponse;
+import com.example.UmirHack_Flagman.auth.dto.UpdateUserData;
+import com.example.UmirHack_Flagman.auth.dto.UserChangeResponse;
+import com.example.UmirHack_Flagman.auth.dto.UserList;
+import com.example.UmirHack_Flagman.auth.dto.UserResponse;
+
+import jakarta.validation.Valid;
+
+@RestController 
+@RequestMapping("/api/v1/admin/")
+public class AdminHandler {
+    private final AdminService adminService;
+
+    public AdminHandler(AdminService adminService) {
+        this.adminService = adminService;
+    }
+
+    // Пользователи
+
+    @GetMapping("users")
+    public ResponseEntity<UserList> getUsers(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(required = false) String search,
+            @RequestParam(name = "role", required = false) String roleFilter,
+            @RequestParam(required = false) String status) {
+        Roles.require(role, Roles.ADMIN);
+        return ResponseEntity.ok(adminService.getUsers(page, limit, search, roleFilter, status));
+    }
+
+    @PostMapping("users/invite")
+    public ResponseEntity<InviteResponse> createInvite(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @Valid @RequestBody CreateInvite req) {
+        Roles.require(role, Roles.ADMIN);
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createInvite(req));
+    }
+
+    @DeleteMapping("users/invite/{code}")
+    public ResponseEntity<Void> revokeInvite(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @PathVariable String code) {
+        Roles.require(role, Roles.ADMIN);
+        adminService.revokeInvite(code);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("users/{userId}")
+    public ResponseEntity<UserResponse> getUser(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @PathVariable UUID userId) {
+        Roles.require(role, Roles.ADMIN);
+        return ResponseEntity.ok(adminService.getUser(userId));
+    }
+
+    @PatchMapping("users/{userId}")
+    public ResponseEntity<UserResponse> updateUser(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @PathVariable UUID userId,
+            @Valid @RequestBody UpdateUserData req) {
+        Roles.require(role, Roles.ADMIN);
+        return ResponseEntity.ok(adminService.updateUser(userId, req));
+    }
+
+    @PatchMapping("users/{userId}/role")
+    public ResponseEntity<UserChangeResponse> changeRole(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @PathVariable UUID userId,
+            @Valid @RequestBody ChangeRole req) {
+        Roles.require(role, Roles.ADMIN);
+        return ResponseEntity.ok(adminService.changeRole(userId, req.getRole()));
+    }
+
+    @PatchMapping("users/{userId}/status")
+    public ResponseEntity<UserChangeResponse> changeStatus(
+            @RequestAttribute(AuthInterceptor.ROLE_ATTR) String role,
+            @PathVariable UUID userId,
+            @Valid @RequestBody ChangeStatus req) {
+        Roles.require(role, Roles.ADMIN);
+        return ResponseEntity.ok(adminService.changeStatus(userId, req.getStatus()));
+    }
+}

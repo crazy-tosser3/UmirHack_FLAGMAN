@@ -9,9 +9,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.example.UmirHack_Flagman.Entity.IngredientEntity;
-import com.example.UmirHack_Flagman.models.Role;
-import com.example.UmirHack_Flagman.Services.ExpiryMonitor;
+import com.example.UmirHack_Flagman.auth.dto.Role;
+import com.example.UmirHack_Flagman.catalog.IngredientEntity;
+import com.example.UmirHack_Flagman.inventory.ExpiryMonitor;
 import com.example.UmirHack_Flagman.support.IntegrationTest;
 
 import tools.jackson.databind.JsonNode;
