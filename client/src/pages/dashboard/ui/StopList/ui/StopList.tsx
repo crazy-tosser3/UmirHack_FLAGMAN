@@ -2,9 +2,8 @@ import api from "@lib/api";
 import { useDelayedValue } from "@shared/hooks/use-delayed-value";
 import { useQuery } from "@tanstack/react-query";
 import { FaChevronLeft, FaChevronRight, FaCircleNotch } from "react-icons/fa";
-import { FaX } from "react-icons/fa6";
+import { FaPause } from "react-icons/fa6";
 import type { StopListData } from "../model/types";
-import { motion } from "framer-motion";
 import { useState } from "react";
 
 export const StopList = () => {
@@ -33,9 +32,9 @@ export const StopList = () => {
 
   return (
     <div className="flex flex-col h-full gap-2"> {/* ← h-full */}
-      <h1 className="text-2xl font-oswald shrink-0 flex gap-2 items-center">
-        <FaX />
+      <h1 className="text-2xl font-oswald shrink-0 flex gap-2 items-center justify-between">
         <span>Стоп-лист</span>
+        <FaPause />
       </h1>
       
       {showLoader ? (

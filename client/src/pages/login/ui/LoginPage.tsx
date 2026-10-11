@@ -32,55 +32,59 @@ export function LoginPage() {
   };
 
   return (
-    <div className='flex flex-col gap-4'>
+    <div className='flex flex-col sm:flex-row shadow-lg gap-4 mx-auto rounded-xl border border-accent overflow-hidden'>
       <PageTitle title='Вход' />
-
-      <h1 className='text-5xl font-oswald text-center'>Добро пожаловать</h1>
-      <p className='text-center text-sm'>Чтобы продолжить работу войдите в аккаунт</p>
-      <form onSubmit={handleSubmit} className='flex flex-col gap-3 w-fit p-2 border border-secondary shadow-md rounded-xl m-auto'>
-        <label htmlFor="userEmail">Почта</label>
-        <input
-          required
-          type="email"
-          value={email}
-          onChange={event => setEmail(event.target.value)}
-          placeholder="IvanovIvan123@email.com"
-          name='userEmail'
-          className='p-2 bg-secondary rounded-lg'
-          />
-        <label htmlFor="userPassword">Пароль</label>
-        <div className='flex gap-2'>
+      <div className='bg-accent flex flex-col text-center sm:text-left justify-center gap-4 p-4'>
+        <h1 className='text-5xl font-oswald'>Добро пожаловать!</h1>
+        <p className='text-sm'>Чтобы продолжить работу войдите в аккаунт</p>
+      </div>
+      <div className='flex flex-col gap-4 p-4'>
+        <form onSubmit={handleSubmit} className='w-full flex flex-col gap-3 p-2 border border-secondary shadow-md rounded-md m-auto'>
+          <label htmlFor="userEmail">Почта</label>
           <input
-          required
-          type={showPassword ? "text" : "password"}
-          value={password}
-          onChange={event => setPassword(event.target.value)}
-          placeholder="Пароль_123"
-          name='userPassword'
-          className='p-2 bg-secondary rounded-lg w-full'
-          />
-          <button 
-          type='button' 
-          onClick={() => setShowPassword(prev => !prev)} 
-          className='min-h-full px-2 rounded-lg bg-secondary hover:bg-primary active:scale-90 transition-all'
-          >
-            {showPassword ? <FaEyeSlash /> : <FaEye />}
-          </button>
+            required
+            type="email"
+            value={email}
+            onChange={event => setEmail(event.target.value.trim())}
+            placeholder="IvanovIvan123@email.com"
+            name='userEmail'
+            className='p-2 bg-secondary rounded-lg'
+            />
+          <label htmlFor="userPassword">Пароль</label>
+          <div className='flex gap-2'>
+            <input
+            required
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={event => setPassword(event.target.value.trim())}
+            placeholder="Пароль_123"
+            name='userPassword'
+            className='p-2 bg-secondary rounded-lg w-full'
+            />
+            <button 
+            type='button' 
+            onClick={() => setShowPassword(prev => !prev)} 
+            className='min-h-full px-2 rounded-lg bg-secondary hover:bg-primary active:scale-90 transition-all'
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+          <NavLink to="/password-reset" className="text-sm">Не помню пароль</NavLink>
+          <LoginBtn />
+          {!!err && <div className='bg-err-bg text-err flex items-center justify-between gap-2 rounded-lg p-2'>
+            <FaExclamationTriangle />
+            <span>{err.status === 401 ? "Неверный логин или пароль" : "Произошла неизвестная ошибка, попробуйте войти позже"}</span>
+          </div>}
+        </form>
+        <div className='text-primary flex gap-2 m-auto items-center justify-center'>
+          <span className='text-center'>
+            Нет аккаунта?
+          </span>
+          <NavLink to="/register" className='p-1 px-2 rounded-md bg-secondary'>
+            Зарегистрироваться
+          </NavLink>
         </div>
-        <NavLink to="/password-reset" className="text-sm">Не помню пароль</NavLink>
-        <LoginBtn />
-        {!!err && <div className='bg-err-bg text-err flex items-center justify-between gap-2 rounded-lg p-2'>
-          <FaExclamationTriangle />
-          <span>{err.status === 401 ? "Неверный логин или пароль" : "Произошла неизвестная ошибка, попробуйте войти позже"}</span>
-        </div>}
-      </form>
-      <div className='text-primary flex gap-2 m-auto items-center justify-center'>
-        <span className='text-center'>
-          Нет аккаунта?
-        </span>
-        <NavLink to="/register" className='p-1 px-2 rounded-xl bg-secondary'>
-          Зарегистрироваться
-        </NavLink>
+
       </div>
     </div>
   );

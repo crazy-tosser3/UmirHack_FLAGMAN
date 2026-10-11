@@ -22,7 +22,7 @@ interface Link {
 export const dashboardNavigation: Link[] = [
   {
     path: "stop-list",
-    element: <DashboardModule><StopList /></DashboardModule>,
+    element: <DashboardModule rowSpan={2} colSpan={4}><StopList /></DashboardModule>,
     ico: FaPause,
     title: "Стоп-лист"
   }

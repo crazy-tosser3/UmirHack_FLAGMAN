@@ -7,7 +7,7 @@
   --white: oklch(98% 0.01 285);
   --light-lavender: oklch(92% 0.023 285);
   --lavender: oklch(74% 0.065 285);
-  --orange: oklch(76% 0.16 67);
+  --orange: oklch(76% 0.08 127);
   
   --bg: var(--white);
   --text: var(--black);
