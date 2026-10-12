@@ -107,3 +107,16 @@ input::placeholder{
 *::-webkit-scrollbar-thumb:hover {
   background-color: var(--accent);
 }
+
+@keyframes overlay-show {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes content-show {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-overlay-show { animation: overlay-show 180ms ease-out; }
+.animate-content-show { animation: content-show 220ms cubic-bezier(0.16, 1, 0.3, 1); }

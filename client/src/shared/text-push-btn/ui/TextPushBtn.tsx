@@ -24,6 +24,7 @@ export const TextPushBtn = ({className="", onClick, children}:PushBtnProps) => {
         animate={{y: 0, opacity: 1, scale: 1}}
         exit={{y: -30, opacity: 0, scale: 0.8}}
         transition={{type: 'tween', duration: .2}}
+        className="flex gap-2 items-center"
         >
           {children}
         </motion.div>

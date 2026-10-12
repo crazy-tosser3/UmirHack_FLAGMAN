@@ -1,7 +1,7 @@
 import api from "@lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { FaChevronLeft, FaChevronRight, FaCircleNotch, FaPlus, FaSearch } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaCircleNotch, FaSearch } from "react-icons/fa";
 import { Table } from "@shared/table";
 import type {
   Cell,
@@ -14,6 +14,8 @@ import { useDebounce } from "@shared/hooks/use-debounce";
 import { useDelayedValue } from "@shared/hooks/use-delayed-value";
 import { units } from "@lib/utils";
 import { FaPlateWheat } from "react-icons/fa6";
+import { CreateDishDialog } from "@widgets/create-dish-dialog";
+import { useAuth } from "@shared/auth/auth-service";
 
 const COLUMNS: ColumnConfig[] = [
   { label: "Название",     sortable: true, sortKey: "name",        align: "left" },
@@ -41,6 +43,8 @@ const transformDish = (dish: Dish): Cell[] => [
 ];
 
 export const DishesTable = () => {
+  const { user } = useAuth();
+
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [searchInput, setSearchInput] = useState("");
@@ -216,12 +220,7 @@ export const DishesTable = () => {
             <FaChevronRight size={12} />
           </button>
 
-          <button
-            type="button"
-            className="grid bg-accent size-8 place-items-center rounded-lg transition-colors hover:bg-accent/70"
-          >
-            <FaPlus size={12} />
-          </button>
+          {user?.role !== "employee" && <CreateDishDialog />}
         </div>
       </div>
     </div>

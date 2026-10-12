@@ -4,8 +4,12 @@ import HotOffers from "./modules/HotOffers"
 import { DashboardModule } from "./DashboardModule"
 import { StopList } from "./StopList"
 import ExpiringBatches from "./modules/ExpiringBatches"
+import { useAuth } from "@shared/auth/auth-service"
+import FastActions from "./modules/FastActions"
 
 export const DashboardPage = () => {
+  const { user } = useAuth();
+
   return (
     <div className="overflow-auto flex-1 flex flex-col sm:flex-row gap-4">
       <DashboardSidebar />
@@ -21,7 +25,7 @@ export const DashboardPage = () => {
             <StopList />
           </DashboardModule>
           <DashboardModule>
-            <ExpiringBatches />
+            {user?.role !== "employee" ? <ExpiringBatches /> : <FastActions />}
           </DashboardModule>
         </div>
       </div>
