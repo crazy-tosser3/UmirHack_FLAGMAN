@@ -81,7 +81,7 @@ const Navigation = () => {
                   key={nav.path}
                   >
                     <nav.ico size={32} className="text-accent" />
-                    <h2 className="text-xl font-manrope relative z-10">{nav.title}</h2>
+                    <h2 className="font-manrope relative z-10">{nav.title}</h2>
                     {location.pathname.startsWith(nav.path) && <span className="text-xs p-1 px-2 bg-success-bg text-success w-fit rounded-full">Уже здесь</span>}
                   </NavLink>
                 ))}

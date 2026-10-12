@@ -9,7 +9,7 @@ import type {
   Dish,
   DishesPage,
   SortDirection,
-} from "@shared/table/model/types";
+} from "@shared/table";
 import { useDebounce } from "@shared/hooks/use-debounce";
 import { useDelayedValue } from "@shared/hooks/use-delayed-value";
 import { units } from "@lib/utils";
@@ -162,11 +162,11 @@ export const DishesTable = () => {
 
       <div className="p-2 relative flex-1 min-h-0 overflow-hidden">
         {showLoader ? (
-          <div className="absolute inset-0 z-10 grid place-items-center">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <div className="flex-1 grid place-items-center">
+            <FaCircleNotch size="20" className="animate-spin" />
           </div>
         ) : isError ? (
-          <p className=" text-err bg-err-bg p-2 rounded-xl text-center">
+          <p className="m-2 text-err bg-err-bg p-2 rounded-xl text-center">
             Не удалось загрузить данные
           </p>
         ) : (

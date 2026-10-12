@@ -1,4 +1,5 @@
 import { dashboardNavigation } from "@lib/config"
+import { cn } from "@lib/utils"
 import { useAuth } from "@shared/auth/auth-service"
 import { useMediaQuery } from "@shared/hooks/use-media-query"
 import { AnimatePresence, motion } from "framer-motion"
@@ -38,7 +39,7 @@ const DashboardSidebar = () => {
             <NavLink
               to={link.path}
               key={link.path}
-              className="flex gap-2 items-center rounded-sm hover:bg-primary/20 transition-colors p-2"
+              className={({ isActive }) => cn("flex gap-2 items-center rounded-sm hover:bg-primary/20 transition-colors p-2", isActive && "text-accent")}
             >
               <link.ico className="min-w-5 min-h-5 shrink-0" size={20} />
 

@@ -3,11 +3,12 @@ import { AnalyticsPage } from "@pages/dashboard/subpages/analytics";
 import { NotFoundPage } from "@pages/not-found";
 import { ProfilePage } from "@pages/profile";
 import type { IconType } from "react-icons";
-import { FaChartBar, FaHome } from "react-icons/fa";
+import { FaBoxes, FaChartBar, FaHome } from "react-icons/fa";
 import { Navigate, Route } from "react-router-dom";
 import type { UserRole } from "./types";
 import { DishesTable } from "@widgets/dishes-table";
 import { FaPlateWheat } from "react-icons/fa6";
+import { StockTable } from "@widgets/stock-table";
 
 // Навигация (синхронизировано с созданием страниц)
 interface Page {
@@ -46,6 +47,13 @@ export const dashboardNavigation: DashboardLink[] = [
     element: <DashboardModule rowSpan={2} colSpan={4}><DishesTable /></DashboardModule>,
     ico: FaPlateWheat,
     title: "Блюда"
+  },
+  {
+    role: ["manager", "admin"],
+    path: "stock",
+    element: <DashboardModule rowSpan={2} colSpan={4}><StockTable /></DashboardModule>,
+    ico: FaBoxes,
+    title: "Остатки"
   },
   {
     role: ["manager", "admin"],
@@ -106,7 +114,12 @@ export const navigation: Navs[] = [
           title: "Аналитика",
           ico: FaChartBar,
           path: "/dashboard/analytics"
-        }
+        },
+        {
+          title: "Остатки",
+          ico: FaBoxes,
+          path: "/dashboard/stock"
+        },
       ]
     }
   }

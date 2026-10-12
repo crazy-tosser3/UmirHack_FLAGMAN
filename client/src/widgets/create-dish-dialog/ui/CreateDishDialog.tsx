@@ -143,7 +143,7 @@ export const CreateDishDialog = () => {
           <div className="flex items-start justify-between gap-4">
             <div>
               <Dialog.Title className="text-xl font-oswald">Новое блюдо</Dialog.Title>
-              <Dialog.Description className="mt-1 text-sm text-primary/60">
+              <Dialog.Description className="mt-1 text-sm text-primary">
                 Название, статус и состав из расчета на одну порцию
               </Dialog.Description>
             </div>
@@ -160,7 +160,7 @@ export const CreateDishDialog = () => {
 
           <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-primary/60">Название</span>
+              <span className="text-primary">Название</span>
               <input
                 autoFocus
                 type="text"
@@ -182,7 +182,7 @@ export const CreateDishDialog = () => {
             </label>
 
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-1 text-sm text-primary">Состав на порцию</legend>
+              <legend className="mb-1 text-sm">Состав на порцию</legend>
 
               {rows.map((row, index) => {
                 const unit = unitOf(row.ingredientId);
