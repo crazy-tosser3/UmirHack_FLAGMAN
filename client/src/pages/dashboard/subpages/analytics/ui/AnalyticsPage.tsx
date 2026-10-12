@@ -1,16 +1,26 @@
 import { DailyDishesChart } from "@widgets/charts/daily-dishes-chart";
 import { DailyIngredientsChart } from "@widgets/charts/daily-ingredients-chart";
+import { DeficitsChart } from "@widgets/charts/deficits-chart";
+import { StockForecastChart } from "@widgets/charts/stock-forecast-chart";
 import { SupplyForecastChart } from "@widgets/charts/supply-forecast-chart";
+import { WriteOffsChart } from "@widgets/charts/write-offs-chart";
 import dayjs from "dayjs";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { FaChartBar } from "react-icons/fa";
 import { AnalyticsChart } from "./AnalyticsChart";
 
+interface Filters {
+  date: string;
+  // Начало периода для отчетов за несколько дней
+  from: string;
+}
+
 interface Variant {
   label: string;
   withDate?: boolean;
-  render: (date: string) => ReactNode;
+  withPeriod?: boolean;
+  render: (filters: Filters) => ReactNode;
 }
 
 const variants = {
@@ -21,15 +31,35 @@ const variants = {
   dishes: {
     label: "Продано блюд",
     withDate: true,
-    render: (date) => (
+    render: ({ date }) => (
       <AnalyticsChart path="/daily/dishes" params={{ date }} Chart={DailyDishesChart} />
     ),
   },
   ingredients: {
     label: "Потрачено ингредиентов",
     withDate: true,
-    render: (date) => (
+    render: ({ date }) => (
       <AnalyticsChart path="/daily/ingredients" params={{ date }} Chart={DailyIngredientsChart} />
+    ),
+  },
+  forecast: {
+    label: "Прогноз стоп-листа",
+    render: () => (
+      <AnalyticsChart path="/stock-forecast" params={{ limit: 100 }} Chart={StockForecastChart} />
+    ),
+  },
+  writeOffs: {
+    label: "Списано просрочки",
+    withPeriod: true,
+    render: ({ from }) => (
+      <AnalyticsChart path="/write-offs" params={{ from, limit: 100 }} Chart={WriteOffsChart} />
+    ),
+  },
+  deficits: {
+    label: "Нехватка продуктов",
+    withPeriod: true,
+    render: ({ from }) => (
+      <AnalyticsChart path="/deficits" params={{ from, limit: 100 }} Chart={DeficitsChart} />
     ),
   },
 } satisfies Record<string, Variant>;
@@ -40,11 +70,20 @@ const variantIds = Object.keys(variants) as VariantId[];
 
 const isVariantId = (value: string): value is VariantId => value in variants;
 
+const periods = [
+  { days: 1, label: "За сегодня" },
+  { days: 7, label: "За неделю" },
+  { days: 30, label: "За 30 дней" },
+];
+
 export const AnalyticsPage = () => {
   const [variantId, setVariantId] = useState<VariantId>("supply");
   const [date, setDate] = useState(() => dayjs().format("YYYY-MM-DD"));
+  const [days, setDays] = useState(7);
 
   const variant: Variant = variants[variantId];
+  // Начало дня — чтобы ключ запроса не менялся при каждом рендере
+  const from = dayjs().subtract(days - 1, "day").startOf("day").toISOString();
 
   return (
     <div className="flex flex-col h-full gap-2">
@@ -75,9 +114,23 @@ export const AnalyticsPage = () => {
             className="p-1 rounded-md cursor-pointer"
           />
         )}
+
+        {variant.withPeriod && (
+          <select
+            value={days}
+            onChange={(e) => setDays(Number(e.target.value))}
+            className="p-1 rounded-md w-fit cursor-pointer"
+          >
+            {periods.map((period) => (
+              <option value={period.days} key={period.days}>
+                {period.label}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
       <div key={variantId} className="flex-1 p-2 min-h-0 overflow-x-hidden flex flex-col">
-        {variant.render(date)}
+        {variant.render({ date, from })}
       </div>
     </div>
   );
