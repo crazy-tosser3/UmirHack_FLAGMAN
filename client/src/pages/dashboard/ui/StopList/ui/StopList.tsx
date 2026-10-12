@@ -72,7 +72,7 @@ const EmptyState = () => (
     initial={{ opacity: 0, scale: 0.96 }}
     animate={{ opacity: 1, scale: 1 }}
     transition={{ duration: 0.3 }}
-    className="flex-1 grid place-items-center text-center"
+    className="m-2 flex-1 grid place-items-center text-center"
   >
     <div className="flex flex-col items-center gap-2 text-primary/60">
       <h3 className="font-manrope text-xl">Стоп-лист пуст</h3>
@@ -113,7 +113,7 @@ export const StopList = () => {
           <FaCircleNotch size="20" className="animate-spin" />
         </div>
       ) : isError ? (
-        <p className="text-err bg-err-bg p-2 rounded-xl text-center shrink-0">
+        <p className="m-2 text-err bg-err-bg p-2 rounded-xl text-center shrink-0">
           Не удалось загрузить данные
         </p>
       ) : isEmpty ? (

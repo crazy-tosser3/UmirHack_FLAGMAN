@@ -88,7 +88,7 @@ const HotOffers = () => {
           <FaCircleNotch size="20" className="animate-spin" />
         </div>
       ) : isError ? (
-        <p className="text-err bg-err-bg p-2 rounded-xl text-center shrink-0">
+        <p className="m-2 text-err bg-err-bg p-2 rounded-xl text-center shrink-0">
           Не удалось загрузить данные
         </p>
       ) : (

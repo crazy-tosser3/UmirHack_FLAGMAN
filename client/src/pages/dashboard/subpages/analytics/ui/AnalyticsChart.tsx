@@ -5,10 +5,8 @@ import type { ComponentType } from "react";
 import { FaCircleNotch } from "react-icons/fa";
 
 interface AnalyticsChartProps<T> {
-  // Путь относительно /analytics
   path: string;
   params?: Record<string, string | number | undefined>;
-  // Тип ответа выводится из пропсов графика, поэтому данные и график всегда согласованы
   Chart: ComponentType<{ data: T }>;
 }
 

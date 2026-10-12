@@ -11,7 +11,7 @@ export const ProfilePage = () => {
   if (!user) return null;
 
   return (
-    <div className="flex flex-col gap-4 border border-primary shadow-md p-4 rounded-xl overflow-y-auto">
+    <div className="bg-bg flex flex-col gap-4 border border-primary shadow-md p-4 rounded-xl overflow-y-auto">
       <FaUser size={48} className="h-16 w-16 m-auto p-2 bg-secondary rounded-lg"/>
       <h1 className="font-oswald text-4xl text-center">{user.name}</h1>
       <h2 className="font-manrope text-xl text-center">{userRole(user.role)}</h2>

@@ -64,7 +64,7 @@ export const SupplyForecastChart = ({ data }: { data: SupplyForecast }) => {
             <Legend wrapperStyle={{ fontSize: 13 }} />
 
             <Bar dataKey="available" name="В наличии"
-                 fill="var(--color-text)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                 fill="var(--color-accent-2)" radius={[4, 4, 0, 0]} maxBarSize={40} />
             <Bar dataKey="required" name={`Нужно на ${data.coverDays} дн.`}
                  fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={40} />
             <Bar dataKey="suggested" name="Рекомендуется закупить"

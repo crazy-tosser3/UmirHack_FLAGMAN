@@ -1,0 +1,1 @@
+export { DishesTable } from "./ui/DishesTable";

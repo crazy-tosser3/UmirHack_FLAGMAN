@@ -1,4 +1,4 @@
-import { navigation } from "@lib/config";
+import { pages } from "@lib/config";
 import { LoginPage } from "@pages/login";
 import { NotFoundPage } from "@pages/not-found";
 import { RegisterPage } from "@pages/register";
@@ -19,7 +19,7 @@ const AppLayout = () => {
   const location = useLocation();
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col gap-2">
+    <div className="h-screen overflow-hidden flex flex-col">
       <Toasts />
       <Header />
         <AnimatePresence mode="wait">
@@ -39,8 +39,8 @@ const AppLayout = () => {
           <>
             {loading || (
               <motion.main 
-              key={location.pathname}
-              className="min-h-0 content flex flex-col flex-1 w-full pb-4"
+              key={location.pathname.split('/')[1]}
+              className="min-h-0 content flex flex-col flex-1 w-full py-2"
               initial={{y: 50, opacity: 0}}
               animate={{y: 0, opacity: 1}}
               exit={{y: 50, opacity: 0}}
@@ -65,7 +65,7 @@ const App = () => {
           <Route path="/register" element={<RegisterPage />} />
           <Route element={<ProtectedRoute />}> 
             <Route index element={<Navigate to="/dashboard" />} />
-            {navigation.map((page, index) => (
+            {pages.map((page, index) => (
               <Route key={index} path={page.path} element={page.element}>{page.nested}</Route>
             ))}
           </Route>

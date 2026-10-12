@@ -8,12 +8,14 @@
   --white: oklch(98% 0.01 285);
   --light-lavender: oklch(92% 0.023 285);
   --lavender: oklch(74% 0.065 285);
-  --orange: oklch(76% 0.08 127);
+  --pastel-green: oklch(76% 0.08 127);
+  --pastel-orange: oklch(76% 0.08 67);
   
   --dark-bg: var(--light-gray);
   --bg: var(--white);
   --text: var(--black);
-  --accent: var(--orange);
+  --accent: var(--pastel-green);
+  --accent-2: var(--pastel-orange);
   --secondary: var(--light-lavender);
   --primary: var(--lavender);
 }
@@ -23,6 +25,7 @@
   --color-bg: var(--bg);
   --color-text: var(--text);
   --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
   /* Для ошибки */
@@ -69,7 +72,7 @@ button {
 }
 
 *::selection {
-  background-color: var(--accent);
+  background-color: var(--accent-2);
   color: var(--black);
 }
 

@@ -9,12 +9,12 @@ export const Header = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="py-4 mb-4 sticky top-0 bg-bg z-50">
-      <header className="content flex gap-4 justify-between items-center">
+    <div className="py-4 sticky top-0 bg-bg z-40">
+      <header className="content flex gap-4 justify-between items-center relative">
         <NavLink to={"/"} className="text-2xl font-oswald rounded-lg">Pantry</NavLink>
         <Navigation />
         {user && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 ">
             <IcoBtn icon={<FaUserCircle />} onClick={() => navigate("/profile")}>{user.name}</IcoBtn>
           </div>
           )}

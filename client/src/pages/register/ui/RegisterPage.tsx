@@ -53,7 +53,7 @@ export const RegisterPage = () => {
       case "email":
         return /^\S+@\S+\.\S+$/.test(data.email) ? "" : "Почта записана неверно";
       case "password":
-        return data.password.length >= 12 ? "" : "Пароль должен быть не короче 12 символов";
+        return data.password.length >= 8 ? "" : "Пароль должен быть не короче 8 символов";
       default:
         return "";
     }

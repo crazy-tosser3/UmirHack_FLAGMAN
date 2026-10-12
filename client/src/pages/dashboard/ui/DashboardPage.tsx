@@ -3,6 +3,7 @@ import DashboardSidebar from "./DashboardSidebar"
 import HotOffers from "./modules/HotOffers"
 import { DashboardModule } from "./DashboardModule"
 import { StopList } from "./StopList"
+import ExpiringBatches from "./modules/ExpiringBatches"
 
 export const DashboardPage = () => {
   return (
@@ -20,7 +21,7 @@ export const DashboardPage = () => {
             <StopList />
           </DashboardModule>
           <DashboardModule>
-            <HotOffers />
+            <ExpiringBatches />
           </DashboardModule>
         </div>
       </div>
