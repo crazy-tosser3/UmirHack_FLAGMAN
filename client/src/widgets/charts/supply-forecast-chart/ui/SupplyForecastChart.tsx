@@ -8,17 +8,24 @@ import { ChartEmpty, ChartTooltip } from "../../shared";
 import type { SupplyForecast } from "../model/types";
 import { useMediaQuery } from "@shared/hooks/use-media-query";
 
+const compactNumber = new Intl.NumberFormat("ru-RU", { notation: "compact", maximumFractionDigits: 1 });
+
 export const SupplyForecastChart = ({ data }: { data: SupplyForecast }) => {
   const pageSize = useMediaQuery("(min-width: 900px)") ? 6 : 1;
   const [page, setPage] = useState(0);
 
-  const totalPages = Math.ceil(data.items.length / pageSize);
+  const sortedItems = useMemo(
+    () => [...data.items].sort((a, b) => b.suggestedQuantity - a.suggestedQuantity),
+    [data.items],
+  );
+
+  const totalPages = Math.ceil(sortedItems.length / pageSize);
   const safePage = Math.max(0, Math.min(page, totalPages - 1));
 
   const paginatedItems = useMemo(() => {
     const start = safePage * pageSize;
-    return data.items.slice(start, start + pageSize);
-  }, [data.items, safePage, pageSize]);
+    return sortedItems.slice(start, start + pageSize);
+  }, [sortedItems, safePage, pageSize]);
 
   const chartData = useMemo(
     () =>
@@ -53,6 +60,8 @@ export const SupplyForecastChart = ({ data }: { data: SupplyForecast }) => {
               axisLine={false}
             />
             <YAxis
+              width={56}
+              tickFormatter={(value: number) => compactNumber.format(value)}
               tick={{ fill: "var(--text)", fontSize: 12 }}
               tickLine={false}
               axisLine={false}

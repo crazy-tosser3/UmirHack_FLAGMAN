@@ -14,6 +14,12 @@ export default defineConfig({
         changeOrigin: true,
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq) => proxyReq.removeHeader('origin'))
+          proxy.on('proxyRes', (proxyRes) => {
+            const cookies = proxyRes.headers['set-cookie']
+            if (cookies) {
+              proxyRes.headers['set-cookie'] = cookies.map((cookie) => cookie.replace(/;\s*Secure/gi, ''))
+            }
+          })
         },
       },
     },
