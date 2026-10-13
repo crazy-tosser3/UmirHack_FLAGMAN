@@ -13,6 +13,9 @@ import { OrdersPage } from "@pages/dashboard/subpages/orders";
 import { AdminPage } from "@pages/dashboard/subpages/admin";
 import { FaReceipt, FaShoppingCart, FaUserShield } from "react-icons/fa";
 import { CreateOrderPage } from "@pages/dashboard/subpages/create-order";
+import { DeliveriesPage } from "@pages/dashboard/subpages/deliveries";
+import { CreateDeliveryPage } from "@pages/dashboard/subpages/create-delivery";
+import { FaTruck, FaTruckLoading } from "react-icons/fa";
 
 // Навигация (синхронизировано с созданием страниц)
 interface Page {
@@ -79,6 +82,20 @@ export const dashboardNavigation: DashboardLink[] = [
     element: <DashboardModule rowSpan={2} colSpan={4}><OrdersPage /></DashboardModule>,
     ico: FaReceipt,
     title: "Заказы"
+  },
+  {
+    role: ["manager", "admin"],
+    path: "deliveries/new",
+    element: <DashboardModule rowSpan={2} colSpan={4}><CreateDeliveryPage /></DashboardModule>,
+    ico: FaTruckLoading,
+    title: "Новая поставка"
+  },
+  {
+    role: ["manager", "admin"],
+    path: "deliveries",
+    element: <DashboardModule rowSpan={2} colSpan={4}><DeliveriesPage /></DashboardModule>,
+    ico: FaTruck,
+    title: "Поставки"
   },
   {
     role: ["admin"],
@@ -154,6 +171,11 @@ export const navigation: Navs[] = [
           title: "Заказы",
           ico: FaReceipt,
           path: "/dashboard/orders"
+        },
+        {
+          title: "Поставки",
+          ico: FaTruck,
+          path: "/dashboard/deliveries"
         },
       ]
     }
