@@ -1,6 +1,3 @@
--- Начальная схема: снята с БД, которую раньше строил Hibernate (ddl-auto=update).
--- Имена ограничений сохранены как у Hibernate, чтобы новые и существующие базы совпадали.
-
 CREATE TABLE users (
     id                uuid         NOT NULL,
     created_at        timestamp(6) with time zone NOT NULL,

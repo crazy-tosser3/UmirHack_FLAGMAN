@@ -1,0 +1,18 @@
+
+/* H1 */
+@font-face {
+  font-family: 'Oswald';
+  src: url('/fonts/Oswald-VariableFont_wght.ttf');
+}
+
+/* H2... */
+@font-face {
+  font-family: 'Manrope';
+  src: url('/fonts/Manrope-VariableFont_wght.ttf');
+}
+
+/* p, span ... */
+@font-face {
+  font-family: 'Golos';
+  src: url('/fonts/GolosText-VariableFont_wght.ttf');
+}
