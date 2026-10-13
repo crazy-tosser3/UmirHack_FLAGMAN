@@ -1,5 +1,6 @@
 // @pages/register/index.tsx
 import api from "@lib/api";
+import { PageTitle } from "@shared/page-title";
 import type { AxiosError } from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
@@ -86,6 +87,7 @@ export const RegisterPage = () => {
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-4">
+      <PageTitle title="Регистрация" />
       <h1 className="font-oswald text-4xl">Регистрация</h1>
 
       <div className="flex items-center gap-4">
