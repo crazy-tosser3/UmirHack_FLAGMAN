@@ -2,6 +2,7 @@ import api from "@lib/api";
 import type { Unit } from "@lib/types";
 import { units } from "@lib/utils";
 import * as Dialog from "@radix-ui/react-dialog";
+import { useToastStore } from "@shared/toasts";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { FaPlus, FaTrash, FaXmark } from "react-icons/fa6";
@@ -35,6 +36,8 @@ export const CreateIngredientsDialog = () => {
   const [rows, setRows] = useState<IngredientRow[]>([EMPTY_ROW]);
   const [formError, setFormError] = useState<string | null>(null);
 
+  const newToast = useToastStore(state => state.newToast);
+
   const queryClient = useQueryClient();
 
   const resetForm = () => {
@@ -51,6 +54,7 @@ export const CreateIngredientsDialog = () => {
       queryClient.invalidateQueries({ queryKey: ["ingredients"] });
       setOpen(false);
       resetForm();
+      newToast("Ингредиенты добавлены!", "success")
     },
     onError: () => {
       setFormError("Не удалось добавить ингредиенты");

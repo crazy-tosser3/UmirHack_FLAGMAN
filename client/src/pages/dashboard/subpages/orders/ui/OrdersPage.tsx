@@ -11,7 +11,7 @@ export const OrdersPage = () => {
   return (
     <div className="flex h-full flex-col min-h-0">
       <h1 className="bg-accent p-2 text-2xl font-oswald shrink-0 flex gap-2 items-center justify-between">
-        <span>Приёмка заказов</span>
+        <span>Приемка заказов</span>
         <FaShoppingCart />
       </h1>
 

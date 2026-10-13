@@ -70,7 +70,7 @@ export const dashboardNavigation: DashboardLink[] = [
     path: "orders",
     element: <DashboardModule rowSpan={2} colSpan={4}><OrdersPage /></DashboardModule>,
     ico: FaShoppingCart,
-    title: "Приёмка заказов"
+    title: "Приемка заказов"
   },
   {
     role: ["admin"],
