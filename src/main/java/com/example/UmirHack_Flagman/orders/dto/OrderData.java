@@ -24,5 +24,13 @@ public class OrderData {
         private UUID dishId;
         private String dishName;
         private int quantity;
+        private List<ExcludedIngredient> excludedIngredients;
+    }
+
+    @Setter 
+    @Getter 
+    public static class ExcludedIngredient {
+        private UUID ingredientId;
+        private String ingredientName;
     }
 }

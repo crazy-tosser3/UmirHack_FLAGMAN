@@ -4,9 +4,11 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -87,6 +89,10 @@ public class OrderService {
     private sealed interface Outcome permits Confirmed, Replayed, Rejected {
     }
 
+    // Позиция заказа: одно и то же блюдо с разным набором исключений — разные позиции
+    private record Line(UUID dishId, List<UUID> excludedIngredientIds) {
+    }
+
     private record Confirmed(UUID orderId, String externalOrderId, List<UUID> ingredientIds) implements Outcome {
     }
 
@@ -100,8 +106,12 @@ public class OrderService {
     public OrderData create(CreateOrderData req, String idempotencyKey) {
         String externalId = req.getExternalOrderId() == null || req.getExternalOrderId().isBlank()
                 ? null : req.getExternalOrderId().trim();
-        Map<UUID, Integer> lines = new LinkedHashMap<>();
-        req.getItems().forEach(i -> lines.merge(i.getDishId(), i.getQuantity(), Integer::sum));
+        Map<Line, Integer> lines = new LinkedHashMap<>();
+        req.getItems().forEach(i -> {
+            List<UUID> excluded = i.getExcludedIngredientIds() == null ? List.of()
+                    : i.getExcludedIngredientIds().stream().distinct().sorted().toList();
+            lines.merge(new Line(i.getDishId(), excluded), i.getQuantity(), Integer::sum);
+        });
         String hash = requestHash(externalId, lines);
 
         Outcome outcome = tx.execute(status -> place(externalId, lines, idempotencyKey, hash));
@@ -119,7 +129,7 @@ public class OrderService {
         };
     }
 
-    private Outcome place(String externalId, Map<UUID, Integer> lines, String idempotencyKey, String hash) {
+    private Outcome place(String externalId, Map<Line, Integer> lines, String idempotencyKey, String hash) {
         em.createNativeQuery("select set_config('lock_timeout', :timeout, true)")
                 .setParameter("timeout", LOCK_TIMEOUT).getSingleResult();
 
@@ -132,9 +142,10 @@ public class OrderService {
                     "Заказ " + externalId + " уже зарегистрирован");
         }
 
-        Map<UUID, DishEntity> dishes = dishRepo.findWithIngredients(lines.keySet()).stream()
+        Set<UUID> dishIds = lines.keySet().stream().map(Line::dishId).collect(Collectors.toCollection(LinkedHashSet::new));
+        Map<UUID, DishEntity> dishes = dishRepo.findWithIngredients(dishIds).stream()
                 .collect(Collectors.toMap(DishEntity::getId, Function.identity()));
-        List<UUID> missing = lines.keySet().stream().filter(id -> !dishes.containsKey(id)).toList();
+        List<UUID> missing = dishIds.stream().filter(id -> !dishes.containsKey(id)).toList();
         if (!missing.isEmpty()) {
             throw new ApiException(HttpStatus.NOT_FOUND, "DISH_NOT_FOUND", "Блюдо не найдено", missing);
         }
@@ -144,12 +155,27 @@ public class OrderService {
             throw new ApiException(HttpStatus.CONFLICT, "DISH_UNAVAILABLE", "Блюдо недоступно для заказа", unavailable);
         }
 
-        // Суммарная потребность по ингредиентам с учетом повторов в разных блюдах
+        List<UUID> foreign = lines.keySet().stream()
+                .flatMap(line -> {
+                    Set<UUID> recipe = dishes.get(line.dishId()).getIngredients().stream()
+                            .map(di -> di.getIngredient().getId()).collect(Collectors.toSet());
+                    return line.excludedIngredientIds().stream().filter(id -> !recipe.contains(id));
+                })
+                .distinct().toList();
+        if (!foreign.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INGREDIENT_NOT_IN_DISH",
+                    "Исключать можно только ингредиенты, входящие в блюдо", foreign);
+        }
+
+        // Суммарная потребность по ингредиентам с учетом повторов в разных блюдах и исключений
         Map<UUID, BigDecimal> need = new LinkedHashMap<>();
         Map<UUID, IngredientEntity> ingredients = new LinkedHashMap<>();
-        lines.forEach((dishId, portions) -> {
-            for (DishIngredientEntity di : dishes.get(dishId).getIngredients()) {
+        lines.forEach((line, portions) -> {
+            for (DishIngredientEntity di : dishes.get(line.dishId()).getIngredients()) {
                 UUID id = di.getIngredient().getId();
+                if (line.excludedIngredientIds().contains(id)) {
+                    continue;
+                }
                 need.merge(id, di.getQuantity().multiply(BigDecimal.valueOf(portions)), BigDecimal::add);
                 ingredients.put(id, di.getIngredient());
             }
@@ -184,7 +210,8 @@ public class OrderService {
         }
 
         CustomerOrderEntity order = new CustomerOrderEntity(externalId);
-        lines.forEach((dishId, portions) -> order.getItems().add(new OrderItemEntity(order, dishes.get(dishId), portions)));
+        lines.forEach((line, portions) -> order.getItems().add(new OrderItemEntity(
+                order, dishes.get(line.dishId()), portions, Set.copyOf(line.excludedIngredientIds()))));
         orderRepo.save(order);
 
         // FEFO: партии уже отсортированы по сроку годности
@@ -292,6 +319,14 @@ public class OrderService {
                 item.setDishId(i.getDish().getId());
                 item.setDishName(i.getDish().getName());
                 item.setQuantity(i.getQuantity());
+                Map<UUID, String> names = i.getDish().getIngredients().stream().collect(Collectors.toMap(
+                        di -> di.getIngredient().getId(), di -> di.getIngredient().getName()));
+                item.setExcludedIngredients(i.getExcludedIngredientIds().stream().sorted().map(id -> {
+                    OrderData.ExcludedIngredient excluded = new OrderData.ExcludedIngredient();
+                    excluded.setIngredientId(id);
+                    excluded.setIngredientName(names.get(id));
+                    return excluded;
+                }).toList());
                 return item;
             }).toList());
             response.setConsumption(consumption(orderId));
@@ -320,9 +355,12 @@ public class OrderService {
         return List.copyOf(byIngredient.values());
     }
 
-    private static String requestHash(String externalId, Map<UUID, Integer> lines) {
+    private static String requestHash(String externalId, Map<Line, Integer> lines) {
         StringBuilder sb = new StringBuilder(String.valueOf(externalId));
-        lines.forEach((id, qty) -> sb.append('|').append(id).append(':').append(qty));
+        lines.forEach((line, qty) -> {
+            sb.append('|').append(line.dishId()).append(':').append(qty);
+            line.excludedIngredientIds().forEach(id -> sb.append('-').append(id));
+        });
         return Hashes.sha256(sb.toString());
     }
 

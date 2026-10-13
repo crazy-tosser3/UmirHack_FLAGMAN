@@ -31,5 +31,9 @@ public class CreateOrderData {
         @Min(1)
         @Max(1000)
         private int quantity;
+
+        // Ингредиенты блюда, которые не нужно класть (и списывать со склада)
+        @Size(max = 50)
+        private List<@NotNull UUID> excludedIngredientIds;
     }
 }

@@ -1,6 +1,7 @@
 package com.example.UmirHack_Flagman.events;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -45,8 +46,20 @@ public class InventoryEventListener {
         stock.setIngredientIds(List.copyOf(event.ingredientIds()));
         broadcaster.publish("stock.updated", stock);
 
+        refreshStopList(Set.of());
+    }
+
+    @Async
+    @EventListener
+    public void onManualStopChanged(InventoryEvents.ManualStopChanged event) {
+        // Блюдо могло уже стоять в стоп-листе по остаткам, но клиентам все равно нужно обновить причины
+        refreshStopList(Set.of(event.dishId()));
+    }
+
+    private void refreshStopList(Set<UUID> alwaysAffected) {
         try {
-            Set<UUID> changed = stopListService.recompute();
+            Set<UUID> changed = new HashSet<>(stopListService.recompute());
+            changed.addAll(alwaysAffected);
             if (!changed.isEmpty()) {
                 StopListUpdatedEvent stopList = new StopListUpdatedEvent();
                 stopList.setUpdatedAt(Instant.now());

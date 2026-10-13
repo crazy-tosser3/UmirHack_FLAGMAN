@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -20,9 +22,12 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.example.UmirHack_Flagman.catalog.DishEntity;
 import com.example.UmirHack_Flagman.catalog.DishIngredientEntity;
 import com.example.UmirHack_Flagman.catalog.DishRepoDB;
+import com.example.UmirHack_Flagman.common.ApiException;
 import com.example.UmirHack_Flagman.common.Paging;
+import com.example.UmirHack_Flagman.events.InventoryEvents;
 import com.example.UmirHack_Flagman.inventory.IngredientStockRow;
 import com.example.UmirHack_Flagman.inventory.StockBatchRepoDB;
+import com.example.UmirHack_Flagman.menu.dto.ManualStopResponse;
 import com.example.UmirHack_Flagman.menu.dto.StopListResponse;
 import com.example.UmirHack_Flagman.menu.dto.StopReasonCode;
 
@@ -32,10 +37,13 @@ public class StopListService {
     private final StockBatchRepoDB batchRepo;
     private final TransactionTemplate tx;
     private final TransactionTemplate readTx;
+    private final ApplicationEventPublisher events;
 
-    public StopListService(DishRepoDB dishRepo, StockBatchRepoDB batchRepo, PlatformTransactionManager txManager) {
+    public StopListService(DishRepoDB dishRepo, StockBatchRepoDB batchRepo, PlatformTransactionManager txManager,
+            ApplicationEventPublisher events) {
         this.dishRepo = dishRepo;
         this.batchRepo = batchRepo;
+        this.events = events;
         this.tx = new TransactionTemplate(txManager);
         this.readTx = new TransactionTemplate(txManager);
         this.readTx.setReadOnly(true);
@@ -82,6 +90,37 @@ public class StopListService {
             response.setPage(page);
             response.setLimit(limit);
             response.setTotal(items.size());
+            return response;
+        });
+    }
+
+    // Ручное добавление блюда в стоп-лист (stop = true) или снятие с него (stop = false)
+    public ManualStopResponse setManualStop(UUID dishId, boolean stop) {
+        boolean changed = Boolean.TRUE.equals(tx.execute(status -> {
+            DishEntity dish = dishRepo.findById(dishId).orElseThrow(() ->
+                    new ApiException(HttpStatus.NOT_FOUND, "DISH_NOT_FOUND", "Блюдо не найдено"));
+            if (dish.isManualStop() == stop) {
+                return false;
+            }
+            dish.setManualStop(stop);
+            return true;
+        }));
+        if (changed) {
+            events.publishEvent(new InventoryEvents.ManualStopChanged(dishId));
+        }
+
+        return readTx.execute(status -> {
+            Map<UUID, IngredientStockRow> stock = batchRepo.aggregateAll(Instant.now()).stream()
+                    .collect(Collectors.toMap(IngredientStockRow::getId, r -> r));
+            DishEntity dish = dishRepo.findWithIngredients(List.of(dishId)).getFirst();
+            DishState state = evaluate(dish, stock);
+
+            ManualStopResponse response = new ManualStopResponse();
+            response.setDishId(dish.getId());
+            response.setDishName(dish.getName());
+            response.setManualStop(dish.isManualStop());
+            response.setAvailable(dish.isActive() && state.available());
+            response.setReasons(state.reasons().stream().map(StopListService::toReason).toList());
             return response;
         });
     }
@@ -143,17 +182,19 @@ public class StopListService {
         item.setDishName(state.dish().getName());
         item.setAvailable(false);
         item.setUpdatedAt(state.dish().getStoppedSince() != null ? state.dish().getStoppedSince() : now);
-        item.setReasons(state.reasons().stream().map(r -> {
-            StopListResponse.Reason reason = new StopListResponse.Reason();
-            reason.setCode(r.code());
-            reason.setIngredientId(r.ingredientId());
-            reason.setIngredientName(r.ingredientName());
-            reason.setRequiredQuantity(r.requiredQuantity());
-            reason.setAvailableQuantity(r.availableQuantity());
-            reason.setUnit(r.unit());
-            return reason;
-        }).toList());
+        item.setReasons(state.reasons().stream().map(StopListService::toReason).toList());
         return item;
+    }
+
+    private static StopListResponse.Reason toReason(Reason r) {
+        StopListResponse.Reason reason = new StopListResponse.Reason();
+        reason.setCode(r.code());
+        reason.setIngredientId(r.ingredientId());
+        reason.setIngredientName(r.ingredientName());
+        reason.setRequiredQuantity(r.requiredQuantity());
+        reason.setAvailableQuantity(r.availableQuantity());
+        reason.setUnit(r.unit());
+        return reason;
     }
 
     private static StopReasonCode parseReason(String value) {

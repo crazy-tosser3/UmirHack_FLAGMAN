@@ -19,6 +19,9 @@ public final class InventoryEvents {
     public record OrderConfirmed(UUID orderId, String externalOrderId) {
     }
 
+    public record ManualStopChanged(UUID dishId) {
+    }
+
     public record BatchExpiring(BatchExpiryEvent payload) {
     }
 
