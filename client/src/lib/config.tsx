@@ -162,6 +162,8 @@ export const navigation: Navs[] = [
           ico: FaChartBar,
           path: "/dashboard/analytics"
         },
+      ],
+      secondary: [
         {
           title: "Остатки",
           ico: FaBoxes,

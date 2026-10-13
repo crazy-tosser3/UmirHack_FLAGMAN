@@ -15,9 +15,9 @@ const DashboardSidebar = () => {
   const { user } = useAuth();
 
   return (
-    <aside style={{width: expanded ? 220+16 : 52+16}} className="z-20 sticky top-0 flex flex-col gap-4 items-center rounded-xl">
+    <aside style={{width: isDesktop ? (expanded ? 220+16 : 52+16) : "auto"}} className="z-20 sticky top-0 flex flex-col gap-4 items-center rounded-xl">
       <motion.nav
-        className="p-2 mr-auto ml-2 shadow-md rounded-xl bg-text text-bg flex sm:flex-col gap-1 overflow-hidden"
+        className="p-2 shadow-md rounded-xl bg-text text-bg flex sm:flex-col gap-1 overflow-hidden"
         animate={{
           width: isDesktop ? (expanded ? 220 : 52) : "auto",
         }}
@@ -28,7 +28,7 @@ const DashboardSidebar = () => {
           className="hidden sm:block w-full p-2 rounded-sm hover:bg-primary/20 transition-colors border-b border-primary shrink-0"
           onClick={() => setExpanded((prev) => !prev)}
         >
-          <FaList size={20} className="m-auto" />
+          <FaList className="m-auto" />
         </button>
 
         {user && dashboardNavigation.map((link) => {
@@ -42,7 +42,7 @@ const DashboardSidebar = () => {
               end
               className={({ isActive }) => cn("flex gap-2 items-center rounded-sm hover:bg-primary/20 transition-colors p-2", isActive && "text-accent")}
             >
-              <link.ico className="min-w-5 min-h-5 shrink-0" size={20} />
+              <link.ico className="size-4 shrink-0" />
 
               <AnimatePresence>
                 {isOpen && (

@@ -56,7 +56,7 @@ const Navigation = () => {
           >
             <AnimatePresence mode="wait">
               <motion.nav 
-              className="m-auto flex gap-4 justify-between flex-wrap"
+              className="m-auto flex gap-4 justify-center flex-wrap"
               initial={{opacity: 0, x: 30}}
               animate={{opacity: 1, x: 0}}
               exit={{opacity: 0, x: -30}}
