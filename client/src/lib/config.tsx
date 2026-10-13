@@ -9,6 +9,9 @@ import type { UserRole } from "./types";
 import { DishesTable } from "@widgets/dishes-table";
 import { FaPlateWheat } from "react-icons/fa6";
 import { StockTable } from "@widgets/stock-table";
+import { OrdersPage } from "@pages/dashboard/subpages/orders";
+import { AdminPage } from "@pages/dashboard/subpages/admin";
+import { FaShoppingCart, FaUserShield } from "react-icons/fa";
 
 // Навигация (синхронизировано с созданием страниц)
 interface Page {
@@ -61,6 +64,20 @@ export const dashboardNavigation: DashboardLink[] = [
     element: <DashboardModule rowSpan={2} colSpan={4}><AnalyticsPage /></DashboardModule>,
     ico: FaChartBar,
     title: "Аналитика"
+  },
+  {
+    role: ["employee", "manager", "admin"],
+    path: "orders",
+    element: <DashboardModule rowSpan={2} colSpan={4}><OrdersPage /></DashboardModule>,
+    ico: FaShoppingCart,
+    title: "Приёмка заказов"
+  },
+  {
+    role: ["admin"],
+    path: "admin",
+    element: <DashboardModule rowSpan={2} colSpan={4}><AdminPage /></DashboardModule>,
+    ico: FaUserShield,
+    title: "Пользователи"
   }
 ]
 
@@ -101,6 +118,11 @@ export const navigation: Navs[] = [
           title: "Блюда",
           ico: FaPlateWheat,
           path: "/dashboard/dishes"
+        },
+        {
+          title: "Заказы",
+          ico: FaShoppingCart,
+          path: "/dashboard/orders"
         }
       ]
     }
@@ -120,6 +142,19 @@ export const navigation: Navs[] = [
           ico: FaBoxes,
           path: "/dashboard/stock"
         },
+      ]
+    }
+  },
+  {
+    categoryName: "Администрирование",
+    role: ["admin"],
+    navs: {
+      primary: [
+        {
+          title: "Пользователи",
+          ico: FaUserShield,
+          path: "/dashboard/admin"
+        }
       ]
     }
   }

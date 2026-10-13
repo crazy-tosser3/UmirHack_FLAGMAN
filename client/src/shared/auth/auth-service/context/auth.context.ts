@@ -1,5 +1,5 @@
 // src/auth/auth.context.js
-import type { User } from '@lib/types';
+import type { TelegramAuthData, User } from '@lib/types';
 import { createContext } from 'react';
 
 interface AuthContext{
@@ -7,6 +7,8 @@ interface AuthContext{
   loading: boolean; 
   isAuthenticated: boolean;
   login: (email: string, password: string) => void; 
+  loginTelegram: (data: TelegramAuthData) => Promise<void>;
+  updateUser: (user: User) => void;
   logout: () => void;
 }
 

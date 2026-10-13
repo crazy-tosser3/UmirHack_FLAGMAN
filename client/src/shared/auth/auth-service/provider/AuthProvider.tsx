@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AuthContext } from '../context/auth.context';
 import api, { refreshAccessToken, setAccessToken } from '@lib/api';
-import type { User } from '@lib/types';
+import type { TelegramAuthData, User } from '@lib/types';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -54,6 +54,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return response.data;
   }, []);
 
+  const loginTelegram = useCallback(async (data: TelegramAuthData) => {
+    const response = await api.post('/auth/telegram', data);
+    const { accessToken, user } = response.data;
+
+    setAccessToken(accessToken);
+    setUser(user);
+  }, []);
+
+  const updateUser = useCallback((next: User) => setUser(next), []);
+
   const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
@@ -68,8 +78,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     isAuthenticated: Boolean(user),
     login,
+    loginTelegram,
+    updateUser,
     logout,
-  }), [user, loading, login, logout]);
+  }), [user, loading, login, loginTelegram, updateUser, logout]);
 
   return (
     <AuthContext.Provider value={value}>

@@ -33,7 +33,7 @@ export const RegisterPage = () => {
   const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
-  const [data, setData] = useState<RegisterData>({...INITIAL_DATA, code: searchParams.get('invite') ?? ''});
+  const [data, setData] = useState<RegisterData>({...INITIAL_DATA, code: searchParams.get('code') ?? searchParams.get('invite') ?? ''});
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
   const navigate = useNavigate();

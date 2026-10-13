@@ -1,4 +1,6 @@
 import { useToastStore } from "@shared/toasts";
+import type { ApiErrorBody, UserRole, UserStatus } from "./types";
+import { isAxiosError } from "axios";
 import {clsx, type ClassValue} from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -32,4 +34,28 @@ export const units = {
   "g": "г",
   "ml": "мл",
   "pcs": "шт"
+}
+
+export const roleLabels: Record<UserRole, string> = {
+  admin: "Администратор",
+  manager: "Менеджер",
+  employee: "Сотрудник",
+}
+
+export const statusLabels: Record<UserStatus, string> = {
+  active: "Активен",
+  pending: "Ожидает",
+  blocked: "Заблокирован",
+}
+
+export const isStaff = (role: UserRole) => role === "manager" || role === "admin";
+
+export const canUseTelegram = isStaff;
+
+export function apiErrorCode(err: unknown): string | undefined {
+  return isAxiosError<ApiErrorBody>(err) ? err.response?.data?.error?.code : undefined;
+}
+
+export function apiErrorMessage(err: unknown, fallback: string): string {
+  return (isAxiosError<ApiErrorBody>(err) && err.response?.data?.error?.message) || fallback;
 }

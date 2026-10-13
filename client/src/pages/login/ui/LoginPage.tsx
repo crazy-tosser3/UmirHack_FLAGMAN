@@ -7,6 +7,9 @@ import LoginBtn from './LoginBtn';
 import { PageTitle } from '@shared/page-title';
 import { useRedirectTo } from '@shared/hooks/redirect-to';
 import type { AxiosError } from 'axios';
+import { TelegramAuth } from '@widgets/telegram-auth';
+import type { TelegramAuthData } from '@lib/types';
+import { apiErrorMessage } from '@lib/utils';
 
 export function LoginPage() {
   const [err, setErr] = useState<AxiosError | null>(null);
@@ -14,8 +17,9 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [tgError, setTgError] = useState<string | null>(null);
 
-  const { login } = useAuth();
+  const { login, loginTelegram } = useAuth();
   
   const redirectPath = searchParams.get('redirect') ?? '/';
   const redirectTo = useRedirectTo(redirectPath);
@@ -28,6 +32,16 @@ export function LoginPage() {
       redirectTo();
     } catch (err) {
       setErr(err as AxiosError)
+    }
+  };
+
+  const handleTelegram = async (data: TelegramAuthData) => {
+    setTgError(null);
+    try {
+      await loginTelegram(data);
+      redirectTo();
+    } catch (err) {
+      setTgError(apiErrorMessage(err, "Не удалось войти через Telegram"));
     }
   };
 
@@ -76,6 +90,18 @@ export function LoginPage() {
             <span>{err.status === 401 ? "Неверный логин или пароль" : "Произошла неизвестная ошибка, попробуйте войти позже"}</span>
           </div>}
         </form>
+        <div className='flex flex-col gap-2 p-2 border border-secondary shadow-md rounded-md'>
+          <div className='flex items-center gap-2 text-sm text-primary'>
+            <span className='flex-1 border-t border-secondary' />
+            <span>или для менеджеров и администраторов</span>
+            <span className='flex-1 border-t border-secondary' />
+          </div>
+          <TelegramAuth onAuth={handleTelegram} className='justify-center' />
+          {tgError && <div className='bg-err-bg text-err flex items-center justify-between gap-2 rounded-lg p-2 text-sm'>
+            <FaExclamationTriangle className='shrink-0' />
+            <span>{tgError}</span>
+          </div>}
+        </div>
         <div className='text-primary flex gap-2 m-auto items-center justify-center'>
           <span className='text-center'>
             Нет аккаунта?

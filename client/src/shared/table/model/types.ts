@@ -7,7 +7,7 @@ type Align = 'left' | 'center' | 'right';
 export interface Cell {
   status?: CellStatus;
   align?: Align;
-  body: string | number;
+  body: React.ReactNode;
 }
 
 export interface ColumnConfig {
