@@ -16,6 +16,7 @@ import { CreateOrderPage } from "@pages/dashboard/subpages/create-order";
 import { DeliveriesPage } from "@pages/dashboard/subpages/deliveries";
 import { CreateDeliveryPage } from "@pages/dashboard/subpages/create-delivery";
 import { FaTruck, FaTruckLoading } from "react-icons/fa";
+import { PageTitle } from "@shared/page-title";
 
 // Навигация (синхронизировано с созданием страниц)
 interface Page {
@@ -113,7 +114,7 @@ export const pages: Page[] = [
     <>
       <Route index element={<Navigate to={dashboardNavigation[0].path} replace />} />
       {dashboardNavigation.map((s) => (
-        <Route key={s.path} path={s.path} element={s.element} />
+        <Route key={s.path} path={s.path} element={<><PageTitle title={s.title} />{s.element}</>} />
       ))}
       <Route path="*" element={<NotFoundPage />} />
     </>

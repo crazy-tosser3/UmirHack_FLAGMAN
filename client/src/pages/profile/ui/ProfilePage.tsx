@@ -1,6 +1,7 @@
 import { copyText, roleLabels } from "@lib/utils";
 import { useAuth } from "@shared/auth/auth-service"
 import { IcoBtn } from "@shared/ico-text-btn";
+import { PageTitle } from "@shared/page-title";
 import { FaDoorOpen, FaUser } from "react-icons/fa";
 import { FaCopy } from "react-icons/fa6";
 import { TelegramLink } from "./TelegramLink";
@@ -13,6 +14,7 @@ export const ProfilePage = () => {
 
   return (
     <div className="bg-bg flex flex-col gap-4 border border-primary shadow-md p-4 rounded-xl overflow-y-auto">
+      <PageTitle title="Профиль" />
       <FaUser size={48} className="h-16 w-16 m-auto p-2 bg-secondary rounded-lg"/>
       <h1 className="font-oswald text-4xl text-center">{user.name}</h1>
       <h2 className="font-manrope text-xl text-center">{roleLabels[user.role]}</h2>
