@@ -39,6 +39,7 @@ const DashboardSidebar = () => {
             <NavLink
               to={link.path}
               key={link.path}
+              end
               className={({ isActive }) => cn("flex gap-2 items-center rounded-sm hover:bg-primary/20 transition-colors p-2", isActive && "text-accent")}
             >
               <link.ico className="min-w-5 min-h-5 shrink-0" size={20} />
