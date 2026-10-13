@@ -44,23 +44,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('auth:logout', handleLogout);
   }, []);
 
+  const startSession = useCallback(async (accessToken: string, fallback: User) => {
+    setAccessToken(accessToken);
+    try {
+      const me = await api.get<User>('/auth/me');
+      setUser(me.data);
+    } catch {
+      setUser(fallback);
+    }
+  }, []);
+
   const login = useCallback(async (email: string, password: string) => {
     const response = await api.post('/auth/login', { email, password });
     const { accessToken, user } = response.data;
 
-    setAccessToken(accessToken);
-    setUser(user);
+    await startSession(accessToken, user);
 
     return response.data;
-  }, []);
+  }, [startSession]);
 
   const loginTelegram = useCallback(async (data: TelegramAuthData) => {
     const response = await api.post('/auth/telegram', data);
     const { accessToken, user } = response.data;
 
-    setAccessToken(accessToken);
-    setUser(user);
-  }, []);
+    await startSession(accessToken, user);
+  }, [startSession]);
 
   const updateUser = useCallback((next: User) => setUser(next), []);
 

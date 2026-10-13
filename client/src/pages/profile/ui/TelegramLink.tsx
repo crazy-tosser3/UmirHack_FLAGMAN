@@ -60,7 +60,7 @@ export const TelegramLink = ({ user }: { user: User }) => {
           <p className="text-sm text-primary">
             Привяжите Telegram, чтобы входить в один клик и получать уведомления от бота
           </p>
-          <TelegramAuth role={user.role} onAuth={handleLink} size="medium" />
+          <TelegramAuth role={user.role} onAuth={handleLink} label="Привязать Telegram" className="items-start" />
         </div>
       )}
     </>

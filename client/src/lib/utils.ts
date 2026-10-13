@@ -9,9 +9,26 @@ export const cn = (...classes:ClassValue[]) => twMerge(clsx(classes));
 export const typedEntries = <K extends PropertyKey, V>(obj: Record<K, V>): [K, V][] =>
   Object.entries(obj) as [K,V][];
 
+function copyWithTextarea(text: string) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const ok = document.execCommand("copy");
+  textarea.remove();
+  if (!ok) throw new Error("copy");
+}
+
 export async function copyText(text: string) {
   try {
-    await navigator.clipboard.writeText(text);
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      copyWithTextarea(text);
+    }
     useToastStore.getState().newToast("Скопировано!", "success");
     return true;
   } catch {
@@ -58,4 +75,14 @@ export function apiErrorCode(err: unknown): string | undefined {
 
 export function apiErrorMessage(err: unknown, fallback: string): string {
   return (isAxiosError<ApiErrorBody>(err) && err.response?.data?.error?.message) || fallback;
+}
+
+export function randomId(): string {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }

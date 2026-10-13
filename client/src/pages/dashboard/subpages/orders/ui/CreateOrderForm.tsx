@@ -1,6 +1,6 @@
 import api from "@lib/api";
 import type { ApiErrorBody } from "@lib/types";
-import { apiErrorCode, apiErrorMessage, formatDateTime, units } from "@lib/utils";
+import { apiErrorCode, apiErrorMessage, formatDateTime, randomId, units } from "@lib/utils";
 import type { DishesPage } from "@shared/table";
 import { useToastStore } from "@shared/toasts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,7 +34,7 @@ export const CreateOrderForm = () => {
   const [rows, setRows] = useState<OrderRow[]>([EMPTY_ROW]);
   const [formError, setFormError] = useState<string | null>(null);
   const [shortage, setShortage] = useState<InsufficientStockDetail[]>([]);
-  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
+  const [idempotencyKey, setIdempotencyKey] = useState(() => randomId());
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
 
   const queryClient = useQueryClient();
@@ -63,7 +63,7 @@ export const CreateOrderForm = () => {
     setRows([EMPTY_ROW]);
     setFormError(null);
     setShortage([]);
-    setIdempotencyKey(crypto.randomUUID());
+    setIdempotencyKey(randomId());
   };
 
   const createMutation = useMutation({
@@ -80,7 +80,7 @@ export const CreateOrderForm = () => {
     onError: (err) => {
       setShortage(shortageDetails(err));
       setFormError(apiErrorMessage(err, "Не удалось принять заказ"));
-      if (apiErrorCode(err) !== undefined) setIdempotencyKey(crypto.randomUUID());
+      if (apiErrorCode(err) !== undefined) setIdempotencyKey(randomId());
     },
   });
 

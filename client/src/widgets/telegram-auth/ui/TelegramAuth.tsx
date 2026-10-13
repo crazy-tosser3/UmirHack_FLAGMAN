@@ -1,66 +1,71 @@
 import type { TelegramAuthData, UserRole } from "@lib/types";
 import { canUseTelegram, cn } from "@lib/utils";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaCircleNotch, FaTelegram } from "react-icons/fa";
 
-const BOT_USERNAME: string | undefined = import.meta.env.VITE_TELEGRAM_BOT_USERNAME;
+const BOT_ID = Number(import.meta.env.VITE_TELEGRAM_BOT_ID);
 const WIDGET_SRC = "https://telegram.org/js/telegram-widget.js?22";
 
-type Callbacks = Record<string, (data: TelegramAuthData) => void>;
+interface TelegramLogin {
+  auth: (
+    options: { bot_id: number; request_access?: "write" },
+    callback: (data: TelegramAuthData | false) => void,
+  ) => void;
+}
+
+declare global {
+  interface Window {
+    Telegram?: { Login?: TelegramLogin };
+  }
+}
+
+let widgetLoading: Promise<TelegramLogin> | null = null;
+
+const loadWidget = () => {
+  if (window.Telegram?.Login) return Promise.resolve(window.Telegram.Login);
+
+  widgetLoading ??= new Promise<TelegramLogin>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = WIDGET_SRC;
+    script.async = true;
+    script.onload = () =>
+      window.Telegram?.Login ? resolve(window.Telegram.Login) : reject(new Error("Telegram widget"));
+    script.onerror = () => {
+      script.remove();
+      widgetLoading = null;
+      reject(new Error("Telegram widget"));
+    };
+    document.head.appendChild(script);
+  });
+
+  return widgetLoading;
+};
 
 interface TelegramAuthProps {
   onAuth: (data: TelegramAuthData) => Promise<void> | void;
   role?: UserRole;
-  size?: "large" | "medium" | "small";
+  label?: string;
   className?: string;
 }
 
-export const TelegramAuth = ({ onAuth, role, size = "large", className }: TelegramAuthProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const onAuthRef = useRef(onAuth);
+export const TelegramAuth = ({
+  onAuth,
+  role,
+  label = "Войти через Telegram",
+  className,
+}: TelegramAuthProps) => {
   const [pending, setPending] = useState(false);
-  const callbackName = "onTelegramAuth" + useId().replace(/[^a-zA-Z0-9]/g, "");
+  const [status, setStatus] = useState<string | null>(null);
 
-  const allowed = !role || canUseTelegram(role);
-
-  useEffect(() => {
-    onAuthRef.current = onAuth;
-  }, [onAuth]);
+  const allowed = Boolean(BOT_ID) && (!role || canUseTelegram(role));
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!allowed || !BOT_USERNAME || !container) return;
+    if (allowed) loadWidget().catch(() => undefined);
+  }, [allowed]);
 
-    const callbacks = window as unknown as Callbacks;
-    callbacks[callbackName] = async (data) => {
-      setPending(true);
-      try {
-        await onAuthRef.current(data);
-      } finally {
-        setPending(false);
-      }
-    };
+  if (role && !canUseTelegram(role)) return null;
 
-    const script = document.createElement("script");
-    script.src = WIDGET_SRC;
-    script.async = true;
-    script.dataset.telegramLogin = BOT_USERNAME;
-    script.dataset.size = size;
-    script.dataset.radius = "8";
-    script.dataset.requestAccess = "write";
-    script.dataset.userpic = "false";
-    script.dataset.onauth = `${callbackName}(user)`;
-    container.replaceChildren(script);
-
-    return () => {
-      container.replaceChildren();
-      delete callbacks[callbackName];
-    };
-  }, [allowed, callbackName, size]);
-
-  if (!allowed) return null;
-
-  if (!BOT_USERNAME) {
+  if (!BOT_ID) {
     return (
       <p className={cn("flex items-center gap-2 text-sm text-primary", className)}>
         <FaTelegram className="shrink-0" />
@@ -69,12 +74,45 @@ export const TelegramAuth = ({ onAuth, role, size = "large", className }: Telegr
     );
   }
 
+  const handleClick = () => {
+    const login = window.Telegram?.Login;
+    if (!login) {
+      setStatus("Telegram ещё загружается, попробуйте через пару секунд");
+      loadWidget().catch(() => setStatus("Не удалось загрузить Telegram, проверьте соединение"));
+      return;
+    }
+
+    setPending(true);
+    setStatus("Подтвердите вход в окне Telegram...");
+
+    login.auth({ bot_id: BOT_ID, request_access: "write" }, async (data) => {
+      if (!data) {
+        setPending(false);
+        setStatus("Вход отменён");
+        return;
+      }
+
+      setStatus(null);
+      try {
+        await onAuth(data);
+      } finally {
+        setPending(false);
+      }
+    });
+  };
+
   return (
-    <div className={cn("relative flex items-center min-h-10", className)}>
-      <div ref={containerRef} className={cn("transition-opacity", pending && "opacity-40 pointer-events-none")} />
-      {pending && (
-        <FaCircleNotch size={16} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin" />
-      )}
+    <div className={cn("flex flex-col items-center gap-2", className)}>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={handleClick}
+        className="inline-flex items-center gap-2.5 rounded-full bg-[#54a9eb] px-6 py-3 font-semibold text-white transition-colors hover:bg-[#4096d8] disabled:cursor-default disabled:opacity-60"
+      >
+        {pending ? <FaCircleNotch size={20} className="animate-spin" /> : <FaTelegram size={22} />}
+        {label}
+      </button>
+      {status && <p className="text-sm text-primary text-center">{status}</p>}
     </div>
   );
 };

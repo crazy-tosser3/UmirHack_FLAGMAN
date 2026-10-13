@@ -70,8 +70,8 @@ export const InviteDialog = () => {
   const handleSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
     const count = Number(clicks);
-    if (!Number.isInteger(count) || count < 1 || count > 1000) {
-      setFormError("Количество активаций должно быть от 1 до 1000");
+    if (clicks.trim() === "" || !Number.isInteger(count) || count < 0 || count > 1000) {
+      setFormError("Количество активаций должно быть от 0 до 1000");
       return;
     }
 
@@ -134,7 +134,7 @@ export const InviteDialog = () => {
               <div className="flex flex-wrap gap-2 text-sm">
                 <span className="bg-secondary px-3 py-1 rounded-full">{roleLabels[role]}</span>
                 <span className="bg-secondary px-3 py-1 rounded-full tabular-nums">
-                  Активаций: {invite.clicks}
+                  {invite.clicks === 0 ? "Без ограничений" : `Активаций: ${invite.clicks}`}
                 </span>
                 <span className="bg-warn-bg text-warn px-3 py-1 rounded-full">
                   до {formatDateTime(invite.expiresAt)}
@@ -198,12 +198,13 @@ export const InviteDialog = () => {
                   <span className="text-primary">Количество активаций</span>
                   <input
                     type="number"
-                    min={1}
+                    min={0}
                     max={1000}
                     value={clicks}
                     onChange={(e) => setClicks(e.target.value)}
                     className="rounded-xl border border-primary bg-bg px-2 py-2 tabular-nums"
                   />
+                  <span className="text-xs text-primary/60">0 — без ограничений</span>
                 </label>
               </div>
 

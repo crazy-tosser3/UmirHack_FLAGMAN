@@ -1,6 +1,6 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
+export const BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -15,6 +15,8 @@ let accessToken: string | null = null;
 export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
+
+export const getAccessToken = () => accessToken;
 
 const NO_REFRESH_ENDPOINTS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout', '/auth/invite'];
 
