@@ -1,0 +1,57 @@
+# ---------- Gradle / Kotlin ----------
+.gradle/
+.kotlin/
+**/build/
+!src/**/build/
+local.properties
+*.hprof
+
+# ---------- IDE ----------
+.idea/
+*.iml
+.vscode/
+*.swp
+*~
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+
+# ---------- Android ----------
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+# ключи подписи релизных сборок
+*.jks
+*.keystore
+keystore.properties
+
+# ---------- iOS / Xcode ----------
+xcuserdata/
+DerivedData/
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+**/xcshareddata/WorkspaceSettings.xcsettings
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ---------- Desktop (установщики) ----------
+*.dmg
+*.msi
+*.deb
+
+# ---------- Node / веб-клиент ----------
+node_modules/
+npm-debug.log*
+
+# ---------- Логи и секреты ----------
+*.log
+.env
+.env.*
+!.env.example
