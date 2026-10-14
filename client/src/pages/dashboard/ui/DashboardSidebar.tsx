@@ -52,7 +52,7 @@ const DashboardSidebar = () => {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15 }}
-                    className="text-sm whitespace-nowrap"
+                    className="text-xs whitespace-nowrap"
                   >
                     {link.title}
                   </motion.span>
