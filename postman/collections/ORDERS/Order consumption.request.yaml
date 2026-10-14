@@ -1,0 +1,9 @@
+$kind: http-request
+description: "Только manager/admin. Списание ингредиентов по партиям."
+url: "{{baseUrl}}/api/v1/orders/{{orderId}}/consumption"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 21000

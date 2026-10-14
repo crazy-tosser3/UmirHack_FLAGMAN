@@ -1,0 +1,9 @@
+$kind: http-request
+description: "reason: insufficient_stock | expired_ingredient | manual."
+url: "{{baseUrl}}/api/v1/stop-list?page=1&limit=20&reason="
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 22000

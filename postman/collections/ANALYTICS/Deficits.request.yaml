@@ -1,0 +1,9 @@
+$kind: http-request
+description: "Каких продуктов не хватало для заказов."
+url: "{{baseUrl}}/api/v1/analytics/deficits?from=&to=&ingredientId=&page=1&limit=20"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 28000

@@ -1,0 +1,16 @@
+$kind: http-request
+description: "Передавать только изменяемые поля."
+url: "{{baseUrl}}/api/v1/admin/users/{{userId}}"
+method: PATCH
+body:
+  type: json
+  content: |-
+    {
+        "name": "Иван Петров",
+        "email": "ivan@mail.ru"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 5000

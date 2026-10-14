@@ -1,0 +1,25 @@
+$kind: http-request
+description: "Создаёт партии. expiresAt должен быть в будущем. Idempotency-Key необязателен: повтор с тем же ключом вернёт ту же поставку."
+url: "{{baseUrl}}/api/v1/deliveries"
+method: POST
+headers:
+  Idempotency-Key: "delivery-2026-00001"
+body:
+  type: json
+  content: |-
+    {
+        "deliveryNumber": "DEL-2026-00001",
+        "receivedAt": "2026-10-11T09:00:00Z",
+        "items": [
+            {
+                "ingredientId": "{{ingredientId}}",
+                "quantity": 5000,
+                "expiresAt": "2026-10-20T21:00:00Z"
+            }
+        ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 13000

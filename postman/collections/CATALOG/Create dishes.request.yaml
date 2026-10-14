@@ -1,0 +1,26 @@
+$kind: http-request
+description: "Только admin. Количество — на одну порцию в единице ингредиента. Создаётся атомарно."
+url: "{{baseUrl}}/api/v1/dishes"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+        "items": [
+            {
+                "name": "Маргарита",
+                "isActive": true,
+                "ingredients": [
+                    {
+                        "ingredientId": "{{ingredientId}}",
+                        "quantity": 120
+                    }
+                ]
+            }
+        ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 12000

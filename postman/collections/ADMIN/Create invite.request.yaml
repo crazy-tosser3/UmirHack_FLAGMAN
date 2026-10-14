@@ -1,0 +1,17 @@
+$kind: http-request
+description: "Создать ссылку-приглашение. role обязательна; expiresAt — не позже чем через 30 дней (по умолчанию +48 ч); clicks: 0–1000, 0 — без ограничений (по умолчанию 1). В ответе — inviteUrl, expiresAt, clicks."
+url: "{{baseUrl}}/api/v1/admin/users/invite"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+        "role": "admin",
+        "expiresAt": "2026-10-15T12:00:00Z",
+        "clicks": 3
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 3362643430875549

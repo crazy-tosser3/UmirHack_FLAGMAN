@@ -1,0 +1,9 @@
+$kind: http-request
+description: "Что и сколько докупить. coverDays 1–30."
+url: "{{baseUrl}}/api/v1/analytics/supply-suggestions?coverDays=3"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 30000

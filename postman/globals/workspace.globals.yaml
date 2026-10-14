@@ -1,0 +1,19 @@
+name: Globals
+values:
+  - key: baseUrl
+    value: http://127.0.0.1:8080
+  - key: accessToken
+    value: ""
+    secret: true
+  - key: inviteCode
+    value: ""
+  - key: userId
+    value: ""
+  - key: ingredientId
+    value: ""
+  - key: dishId
+    value: ""
+  - key: deliveryId
+    value: ""
+  - key: orderId
+    value: ""

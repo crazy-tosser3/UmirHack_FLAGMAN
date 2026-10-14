@@ -1,0 +1,24 @@
+$kind: http-request
+description: "Только admin. unit: g | ml | pcs. Название уникально без учёта регистра."
+url: "{{baseUrl}}/api/v1/ingredients"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+        "items": [
+            {
+                "name": "Базилик",
+                "unit": "g"
+            },
+            {
+                "name": "Апельсиновый сок",
+                "unit": "ml"
+            }
+        ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 10000

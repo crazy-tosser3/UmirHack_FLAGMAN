@@ -1,0 +1,13 @@
+$kind: http-request
+description: ""
+url: http://127.0.0.1:8080/api/v1/auth/login
+method: POST
+body:
+  type: json
+  content: |-
+    {
+        "email": "crazytosser4@gmail.com",
+        "password": "111111111111"
+    }
+    // 909324mdkmow9023
+order: 2764146767996806

@@ -1,0 +1,9 @@
+$kind: http-request
+description: "Продажи блюд за день. date: 2026-10-11, пустой — сегодня."
+url: "{{baseUrl}}/api/v1/analytics/daily/dishes?date="
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 25000

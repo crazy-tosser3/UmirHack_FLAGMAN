@@ -1,0 +1,9 @@
+$kind: http-request
+description: "Только manager/admin. status: confirmed | cancelled."
+url: "{{baseUrl}}/api/v1/orders?page=1&limit=20&status=&from=&to=&externalOrderId="
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 19000
