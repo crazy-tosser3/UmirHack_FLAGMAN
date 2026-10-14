@@ -53,7 +53,7 @@ export const Toasts = () => {
     <aside 
     className={cn("flex flex-col gap-2 fixed bottom-4 right-4 z-45")}
     style={{ 
-      bottom: 'max(1rem, env(safe-area-inset-bottom) + 1rem)' 
+      bottom: 'calc(var(--bottom-nav-h, 0px) + max(1rem, env(safe-area-inset-bottom) + 1rem))' 
     }}>
       <AnimatePresence mode="popLayout">
         {toasts.slice(-3).map((toast) => (
