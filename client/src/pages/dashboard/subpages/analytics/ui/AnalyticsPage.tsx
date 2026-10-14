@@ -12,7 +12,6 @@ import { AnalyticsChart } from "./AnalyticsChart";
 
 interface Filters {
   date: string;
-  // Начало периода для отчетов за несколько дней
   from: string;
 }
 
@@ -82,7 +81,6 @@ export const AnalyticsPage = () => {
   const [days, setDays] = useState(7);
 
   const variant: Variant = variants[variantId];
-  // Начало дня — чтобы ключ запроса не менялся при каждом рендере
   const from = dayjs().subtract(days - 1, "day").startOf("day").toISOString();
 
   return (

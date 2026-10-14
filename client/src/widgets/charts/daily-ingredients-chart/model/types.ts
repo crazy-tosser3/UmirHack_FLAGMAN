@@ -1,6 +1,5 @@
 import type { Unit } from "@lib/types";
 
-// GET /analytics/daily/ingredients
 export interface DailyIngredientItem {
   ingredientId: string;
   ingredientName: string;
@@ -11,7 +10,6 @@ export interface DailyIngredientItem {
 }
 
 export interface DailyIngredients {
-  // YYYY-MM-DD
   date: string;
   from: string;
   to: string;

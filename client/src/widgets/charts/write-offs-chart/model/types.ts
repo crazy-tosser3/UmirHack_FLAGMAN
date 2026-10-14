@@ -8,7 +8,6 @@ export interface WriteOffItem {
   batchesCount: number;
 }
 
-// GET /analytics/write-offs
 export interface WriteOffs {
   from: string;
   to: string;

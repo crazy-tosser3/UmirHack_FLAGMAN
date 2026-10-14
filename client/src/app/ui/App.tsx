@@ -6,6 +6,7 @@ import { useAuth } from "@shared/auth/auth-service";
 import { ProtectedRoute } from "@shared/auth/protected-route";
 import { useDelayedValue } from "@shared/hooks/use-delayed-value";
 import { Toasts } from "@shared/toasts";
+import { ScrollToTop } from "@shared/scroll-to-top";
 import { Header } from "@widgets/header";
 import { AnimatePresence, motion } from "framer-motion";
 import { FaCircleNotch } from "react-icons/fa";
@@ -19,8 +20,9 @@ const AppLayout = () => {
   const location = useLocation();
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col">
+    <div className="min-h-dvh flex flex-col sm:h-screen sm:overflow-hidden">
       <Toasts />
+      <ScrollToTop />
       <Header />
         <AnimatePresence mode="wait">
           {showLoader ? (

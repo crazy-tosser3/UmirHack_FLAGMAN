@@ -1,4 +1,3 @@
-// @widgets/stock-table.tsx
 import api from "@lib/api";
 import { units } from "@lib/utils";
 import { CreateIngredientsDialog } from "@widgets/create-ingredients-dialog";

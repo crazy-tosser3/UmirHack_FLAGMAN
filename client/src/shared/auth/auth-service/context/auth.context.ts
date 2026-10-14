@@ -1,4 +1,3 @@
-// src/auth/auth.context.js
 import type { TelegramAuthData, User } from '@lib/types';
 import { createContext } from 'react';
 

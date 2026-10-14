@@ -1,4 +1,3 @@
-// src/pages/LoginPage.jsx
 import { useAuth } from '@shared/auth/auth-service';
 import { useState } from 'react';
 import { FaExclamationTriangle, FaEye, FaEyeSlash } from 'react-icons/fa';

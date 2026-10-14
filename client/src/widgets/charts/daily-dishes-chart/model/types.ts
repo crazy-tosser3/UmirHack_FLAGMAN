@@ -1,4 +1,3 @@
-// GET /analytics/daily/dishes
 export interface DailyDishItem {
   dishId: string;
   dishName: string;
@@ -7,7 +6,6 @@ export interface DailyDishItem {
 }
 
 export interface DailyDishes {
-  // YYYY-MM-DD
   date: string;
   from: string;
   to: string;

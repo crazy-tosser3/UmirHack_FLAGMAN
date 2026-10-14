@@ -2,9 +2,27 @@ import type { Unit } from "@lib/types";
 
 export type OrderStatus = "confirmed" | "cancelled";
 
+export interface CreateOrderItem {
+  dishId: string;
+  quantity: number;
+  excludedIngredientIds?: string[];
+}
+
 export interface CreateOrderPayload {
   externalOrderId?: string;
-  items: { dishId: string; quantity: number }[];
+  items: CreateOrderItem[];
+}
+
+export interface ExcludedIngredient {
+  ingredientId: string;
+  ingredientName: string;
+}
+
+export interface OrderItem {
+  dishId: string;
+  dishName: string;
+  quantity: number;
+  excludedIngredients?: ExcludedIngredient[];
 }
 
 export interface ConsumptionItem {
@@ -19,7 +37,7 @@ export interface Order {
   externalOrderId: string | null;
   status: OrderStatus;
   createdAt: string;
-  items: { dishId: string; dishName: string; quantity: number }[];
+  items: OrderItem[];
   consumption: ConsumptionItem[];
   stockVersion: number | null;
 }

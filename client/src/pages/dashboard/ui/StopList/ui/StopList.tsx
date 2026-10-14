@@ -4,12 +4,40 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { FaChevronLeft, FaChevronRight, FaCircleNotch } from "react-icons/fa";
-import { FaChevronDown, FaPause } from "react-icons/fa6";
-import type { StopListData, StopListDish } from "../model/types";
-import { cn, copyText, units } from "@lib/utils";
+import { FaChevronDown, FaHand, FaPause, FaPlay } from "react-icons/fa6";
+import { isManualStop, type Reason, type StopListData, type StopListDish } from "../model/types";
+import { cn, copyText, isStaff, units } from "@lib/utils";
+import { useAuth } from "@shared/auth/auth-service";
+import { useManualStop } from "@shared/stop-list";
+
+const ReasonRow = ({ reason }: { reason: Reason }) => {
+  if (reason.code === "manual") {
+    return (
+      <li className="flex gap-2 items-center text-warn">
+        <FaHand className="shrink-0" />
+        <span>Остановлено вручную</span>
+      </li>
+    );
+  }
+
+  const label = reason.code === "expired_ingredient" ? "просрочен" : null;
+
+  return (
+    <li className="flex gap-4 items-center justify-between">
+      <span className="truncate">{reason.ingredientName ?? "Ингредиент"}</span>
+      <span className="bg-err-bg text-err px-2 rounded-full tabular-nums shrink-0">
+        {label ?? `${reason.availableQuantity ?? 0} / ${reason.requiredQuantity ?? 0} ${reason.unit ? units[reason.unit] : ""}`}
+      </span>
+    </li>
+  );
+};
 
 const Dish = ({ dish, index }: { dish: StopListDish; index: number }) => {
   const [showDetails, setShowDetails] = useState(false);
+  const { user } = useAuth();
+  const manualStop = useManualStop();
+  const manual = isManualStop(dish);
+  const canManage = user ? isStaff(user.role) : false;
 
   return (
     <motion.div
@@ -20,7 +48,23 @@ const Dish = ({ dish, index }: { dish: StopListDish; index: number }) => {
       className="flex gap-2 min-w-0"
     >
       <div className="flex flex-col gap-1 min-w-0 flex-1">
-        <p className="font-manrope truncate">{dish.dishName}</p>
+        <div className="flex items-center gap-2 min-w-0">
+          <p className="font-manrope truncate flex-1">{dish.dishName}</p>
+          {manual && (
+            <span className="shrink-0 text-xs bg-warn-bg text-warn px-2 rounded-full">вручную</span>
+          )}
+          {canManage && manual && (
+            <button
+              type="button"
+              title="Вернуть в меню"
+              disabled={manualStop.isPending}
+              onClick={() => manualStop.mutate({ dishId: dish.dishId, stop: false })}
+              className="shrink-0 grid size-7 place-items-center rounded-lg border border-primary transition-colors hover:bg-success-bg hover:text-success disabled:opacity-40"
+            >
+              <FaPlay size={10} />
+            </button>
+          )}
+        </div>
 
         <button
           type="button"
@@ -43,12 +87,7 @@ const Dish = ({ dish, index }: { dish: StopListDish; index: number }) => {
             >
               <ul className="p-2 border rounded-md border-primary flex flex-col gap-2">
                 {dish.reasons.map((reason, index) => (
-                  <li key={index} className="flex gap-4 items-center justify-between">
-                    <span>{reason.ingredientName}</span>
-                    <span className="bg-err-bg text-err px-2 rounded-full tabular-nums">
-                      {reason.availableQuantity} / {reason.requiredQuantity} {units[reason.unit]}.
-                    </span>
-                  </li>
+                  <ReasonRow key={index} reason={reason} />
                 ))}
 
                 <button

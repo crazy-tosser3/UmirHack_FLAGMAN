@@ -1,6 +1,6 @@
 import api from "@lib/api";
 import type { ApiErrorBody } from "@lib/types";
-import { apiErrorCode, apiErrorMessage, formatDateTime, isStaff, randomId, units } from "@lib/utils";
+import { apiErrorCode, apiErrorMessage, cn, formatDateTime, isStaff, randomId, units } from "@lib/utils";
 import { useAuth } from "@shared/auth/auth-service";
 import type { Dish } from "@shared/table";
 import { useToastStore } from "@shared/toasts";
@@ -8,7 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { useState } from "react";
 import { FaCartPlus } from "react-icons/fa";
-import { FaCheck, FaMinus, FaPlus, FaTrash } from "react-icons/fa6";
+import { FaCheck, FaMinus, FaPlus, FaSliders, FaTrash } from "react-icons/fa6";
 import { NavLink } from "react-router-dom";
 import type {
   CatalogIngredient,
@@ -19,11 +19,24 @@ import type {
 import { DishMenu } from "./DishMenu";
 
 interface CartLine {
+  key: string;
   dish: Dish;
   quantity: number;
+  excluded: string[];
 }
 
 const MAX_QUANTITY = 1000;
+const MAX_EXCLUDED = 50;
+
+const lineKey = (dishId: string, excluded: string[]) => `${dishId}|${[...excluded].sort().join(",")}`;
+
+const mergeLine = (lines: CartLine[], line: CartLine): CartLine[] => {
+  const existing = lines.find((l) => l.key === line.key);
+  if (!existing) return [...lines, line];
+  return lines.map((l) =>
+    l.key === line.key ? { ...l, quantity: Math.min(MAX_QUANTITY, l.quantity + line.quantity) } : l,
+  );
+};
 const INVALIDATE_KEYS = ["orders", "stock", "stop-list", "hot-offers", "expiring-batches", "analytics"];
 
 const shortageDetails = (err: unknown): InsufficientStockDetail[] => {
@@ -40,6 +53,7 @@ export const CreateOrderPage = () => {
   const [shortage, setShortage] = useState<InsufficientStockDetail[]>([]);
   const [idempotencyKey, setIdempotencyKey] = useState(() => randomId());
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
   const newToast = useToastStore((s) => s.newToast);
@@ -64,6 +78,7 @@ export const CreateOrderPage = () => {
     setLines([]);
     setExternalId("");
     clearErrors();
+    setEditingKey(null);
     setIdempotencyKey(randomId());
   };
 
@@ -85,29 +100,48 @@ export const CreateOrderPage = () => {
     },
   });
 
-  const addDish = (dish: Dish) => {
+  const addDish = (dish: Dish, excluded: string[]) => {
     clearErrors();
-    setLines((prev) => {
-      const existing = prev.find((l) => l.dish.id === dish.id);
-      if (!existing) return [...prev, { dish, quantity: 1 }];
-      return prev.map((l) =>
-        l.dish.id === dish.id ? { ...l, quantity: Math.min(MAX_QUANTITY, l.quantity + 1) } : l,
-      );
-    });
+    setLines((prev) => mergeLine(prev, { key: lineKey(dish.id, excluded), dish, quantity: 1, excluded }));
   };
 
-  const setQuantity = (dishId: string, quantity: number) => {
+  const setQuantity = (key: string, quantity: number) => {
     clearErrors();
     setLines((prev) =>
       quantity <= 0
-        ? prev.filter((l) => l.dish.id !== dishId)
-        : prev.map((l) =>
-            l.dish.id === dishId ? { ...l, quantity: Math.min(MAX_QUANTITY, quantity) } : l,
-          ),
+        ? prev.filter((l) => l.key !== key)
+        : prev.map((l) => (l.key === key ? { ...l, quantity: Math.min(MAX_QUANTITY, quantity) } : l)),
     );
   };
 
-  const cart = Object.fromEntries(lines.map((l) => [l.dish.id, l.quantity]));
+  const toggleExcluded = (line: CartLine, ingredientId: string) => {
+    const isExcluded = line.excluded.includes(ingredientId);
+    const excluded = isExcluded
+      ? line.excluded.filter((id) => id !== ingredientId)
+      : [...line.excluded, ingredientId];
+
+    if (!isExcluded && excluded.length >= line.dish.ingredients.length) {
+      newToast("Нельзя убрать из блюда все ингредиенты", "error");
+      return;
+    }
+    if (excluded.length > MAX_EXCLUDED) {
+      newToast(`Можно исключить не больше ${MAX_EXCLUDED} ингредиентов`, "error");
+      return;
+    }
+
+    clearErrors();
+    const key = lineKey(line.dish.id, excluded);
+    setLines((prev) => mergeLine(prev.filter((l) => l.key !== line.key), { ...line, key, excluded }));
+    setEditingKey(key);
+  };
+
+  const ingredientNameIn = (dish: Dish, id: string) =>
+    dish.ingredients.find((i) => i.ingredientId === id)?.ingredientName ?? "ингредиент";
+
+  const cart = lines.reduce<Record<string, number>>((acc, l) => {
+    acc[l.dish.id] = (acc[l.dish.id] ?? 0) + l.quantity;
+    return acc;
+  }, {});
   const totalPortions = lines.reduce((sum, l) => sum + l.quantity, 0);
 
   const handleSubmit = (e: React.SubmitEvent) => {
@@ -120,7 +154,11 @@ export const CreateOrderPage = () => {
 
     createMutation.mutate({
       externalOrderId: externalId.trim() || undefined,
-      items: lines.map((l) => ({ dishId: l.dish.id, quantity: l.quantity })),
+      items: lines.map((l) => ({
+        dishId: l.dish.id,
+        quantity: l.quantity,
+        ...(l.excluded.length ? { excludedIngredientIds: l.excluded } : {}),
+      })),
     });
   };
 
@@ -160,43 +198,93 @@ export const CreateOrderPage = () => {
               </p>
             ) : (
               <ul className="divide-y divide-primary/40">
-                {lines.map(({ dish, quantity }) => (
-                  <li key={dish.id} className="flex items-center gap-2 p-2">
-                    <span className="flex-1 min-w-0 truncate">{dish.name}</span>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setQuantity(dish.id, quantity - 1)}
-                        className="grid size-7 place-items-center rounded-lg border border-primary transition-colors hover:bg-secondary"
-                      >
-                        <FaMinus size={10} />
-                      </button>
-                      <input
-                        type="number"
-                        min={1}
-                        max={MAX_QUANTITY}
-                        value={quantity}
-                        onChange={(e) => setQuantity(dish.id, Math.floor(Number(e.target.value)) || 1)}
-                        className="w-12 rounded-lg border border-primary bg-bg px-1 py-0.5 text-center text-sm tabular-nums"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setQuantity(dish.id, quantity + 1)}
-                        disabled={quantity >= MAX_QUANTITY}
-                        className="grid size-7 place-items-center rounded-lg border border-primary transition-colors hover:bg-secondary disabled:opacity-40"
-                      >
-                        <FaPlus size={10} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setQuantity(dish.id, 0)}
-                        className="grid size-7 place-items-center rounded-lg border border-primary transition-colors hover:bg-err-bg hover:text-err"
-                      >
-                        <FaTrash size={10} />
-                      </button>
-                    </div>
-                  </li>
-                ))}
+                {lines.map((line) => {
+                  const { key, dish, quantity, excluded } = line;
+                  const editing = editingKey === key;
+                  return (
+                    <li key={key} className="flex flex-col gap-2 p-2">
+                      <div className="flex items-center gap-2">
+                        <span className="flex-1 min-w-0">
+                          <span className="block truncate">{dish.name}</span>
+                          {excluded.length > 0 && (
+                            <span className="block text-xs text-warn truncate">
+                              без: {excluded.map((id) => ingredientNameIn(dish, id).toLowerCase()).join(", ")}
+                            </span>
+                          )}
+                        </span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            title="Изменить состав"
+                            onClick={() => setEditingKey(editing ? null : key)}
+                            className={cn(
+                              "grid size-7 place-items-center rounded-lg border border-primary transition-colors hover:bg-secondary",
+                              (editing || excluded.length > 0) && "bg-accent/30",
+                            )}
+                          >
+                            <FaSliders size={10} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQuantity(key, quantity - 1)}
+                            className="grid size-7 place-items-center rounded-lg border border-primary transition-colors hover:bg-secondary"
+                          >
+                            <FaMinus size={10} />
+                          </button>
+                          <input
+                            type="number"
+                            min={1}
+                            max={MAX_QUANTITY}
+                            value={quantity}
+                            onChange={(e) => setQuantity(key, Math.floor(Number(e.target.value)) || 1)}
+                            className="w-12 rounded-lg border border-primary bg-bg px-1 py-0.5 text-center text-sm tabular-nums"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setQuantity(key, quantity + 1)}
+                            disabled={quantity >= MAX_QUANTITY}
+                            className="grid size-7 place-items-center rounded-lg border border-primary transition-colors hover:bg-secondary disabled:opacity-40"
+                          >
+                            <FaPlus size={10} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQuantity(key, 0)}
+                            className="grid size-7 place-items-center rounded-lg border border-primary transition-colors hover:bg-err-bg hover:text-err"
+                          >
+                            <FaTrash size={10} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {editing && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-primary">Нажмите на ингредиент, чтобы убрать его из блюда</span>
+                          <div className="flex flex-wrap gap-1">
+                            {dish.ingredients.map((ing) => {
+                              const off = excluded.includes(ing.ingredientId);
+                              return (
+                                <button
+                                  key={ing.ingredientId}
+                                  type="button"
+                                  onClick={() => toggleExcluded(line, ing.ingredientId)}
+                                  className={cn(
+                                    "rounded-full border px-2 py-0.5 text-xs transition-colors",
+                                    off
+                                      ? "border-warn bg-warn-bg text-warn line-through"
+                                      : "border-primary hover:bg-secondary",
+                                  )}
+                                >
+                                  {ing.ingredientName}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -254,9 +342,16 @@ export const CreateOrderPage = () => {
                 <span className="text-primary">{formatDateTime(lastOrder.createdAt)}</span>
               </div>
               <ul className="flex flex-col gap-1">
-                {lastOrder.items.map((item) => (
-                  <li key={item.dishId} className="flex justify-between gap-4">
-                    <span className="truncate">{item.dishName}</span>
+                {lastOrder.items.map((item, index) => (
+                  <li key={`${item.dishId}-${index}`} className="flex justify-between gap-4">
+                    <span className="min-w-0">
+                      <span className="block truncate">{item.dishName}</span>
+                      {item.excludedIngredients && item.excludedIngredients.length > 0 && (
+                        <span className="block text-xs text-warn truncate">
+                          без: {item.excludedIngredients.map((e) => e.ingredientName.toLowerCase()).join(", ")}
+                        </span>
+                      )}
+                    </span>
                     <span className="tabular-nums shrink-0">× {item.quantity}</span>
                   </li>
                 ))}

@@ -2,7 +2,6 @@
 @import 'fonts.css';
 
 :root {
-  /* Цвета */
   --black: oklch(25% 0.017 285);
   --light-gray: oklch(95% 0.01 285);
   --white: oklch(98% 0.01 285);
@@ -28,13 +27,10 @@
   --color-accent-2: var(--accent-2);
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
-  /* Для ошибки */
   --color-err: #B91C1C;
   --color-err-bg: #EDC5C5;
-  /* Для предупреждения */
   --color-warn: #854D0E;
   --color-warn-bg: #FAEFCF;
-  /* Для успешных операций */
   --color-success: #166534;
   --color-success-bg: #D5EBDC;
 

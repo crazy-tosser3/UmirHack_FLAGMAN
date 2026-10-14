@@ -15,13 +15,11 @@ export interface StockForecastItem {
   dishId: string;
   dishName: string;
   availablePortions: number;
-  // null — в пределах горизонта в стоп не уйдет
   stopAt: string | null;
   cause: ForecastCause | null;
   limitingIngredient: LimitingIngredient;
 }
 
-// GET /analytics/stock-forecast
 export interface StockForecast {
   generatedAt: string;
   horizonDays: number;

@@ -12,7 +12,8 @@ import type {
 } from "@shared/table";
 import { useDebounce } from "@shared/hooks/use-debounce";
 import { useDelayedValue } from "@shared/hooks/use-delayed-value";
-import { units } from "@lib/utils";
+import { isStaff, units } from "@lib/utils";
+import { StopToggle } from "./StopToggle";
 import { FaPlateWheat } from "react-icons/fa6";
 import { CreateDishDialog } from "@widgets/create-dish-dialog";
 import { useAuth } from "@shared/auth/auth-service";
@@ -23,6 +24,8 @@ const COLUMNS: ColumnConfig[] = [
   { label: "Ингредиентов", sortable: true, sortKey: "ingredients", align: "center" },
   { label: "Состав",       sortable: false,                        align: "left" },
 ];
+
+const STOP_COLUMN: ColumnConfig = { label: "Стоп", align: "center" };
 
 const LIMIT_OPTIONS = [20, 50, 100];
 
@@ -44,6 +47,7 @@ const transformDish = (dish: Dish): Cell[] => [
 
 export const DishesTable = () => {
   const { user } = useAuth();
+  const canManageStop = user ? isStaff(user.role) : false;
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
@@ -79,6 +83,17 @@ export const DishesTable = () => {
     placeholderData: (prev) => prev,
   });
 
+  const { data: manualStops } = useQuery({
+    queryKey: ["stop-list", "manual"],
+    queryFn: async () =>
+      (await api.get<{ items: { dishId: string }[] }>("/stop-list", {
+        params: { reason: "manual", limit: 100 },
+      })).data,
+    enabled: canManageStop,
+  });
+
+  const manualIds = new Set(manualStops?.items.map((d) => d.dishId) ?? []);
+
   const sortedItems = (() => {
     const items = data?.items ?? [];
     if (!sort) return items;
@@ -101,7 +116,12 @@ export const DishesTable = () => {
     return sorted;
   })();
 
-  const rows: Cell[][] = sortedItems.map(transformDish);
+  const columns = canManageStop ? [...COLUMNS, STOP_COLUMN] : COLUMNS;
+  const rows: Cell[][] = sortedItems.map((dish) =>
+    canManageStop
+      ? [...transformDish(dish), { body: <StopToggle dishId={dish.id} stopped={manualIds.has(dish.id)} />, align: "center" }]
+      : transformDish(dish),
+  );
 
   const handleSort = (key: string) => {
     setSort((prev) => {
@@ -171,7 +191,7 @@ export const DishesTable = () => {
           </p>
         ) : (
           <Table
-            columns={COLUMNS}
+            columns={columns}
             data={rows}
             sort={sort ?? undefined}
             onSort={handleSort}

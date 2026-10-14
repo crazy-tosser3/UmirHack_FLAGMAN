@@ -9,7 +9,6 @@ export interface DeficitItem {
   lastDeficitAt: string;
 }
 
-// GET /analytics/deficits
 export interface Deficits {
   from: string;
   to: string;

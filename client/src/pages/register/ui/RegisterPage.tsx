@@ -1,4 +1,3 @@
-// @pages/register/index.tsx
 import api from "@lib/api";
 import { PageTitle } from "@shared/page-title";
 import type { AxiosError } from "axios";

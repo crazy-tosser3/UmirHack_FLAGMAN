@@ -6,12 +6,10 @@ export interface SupplyItem {
   unit: Unit;
   availableQuantity: number;
   dailyConsumption: number;
-  // null — остаток не иссякнет в пределах горизонта
   depletionAt: string | null;
   suggestedQuantity: number;
 }
 
-// GET /analytics/supply-suggestions
 export interface SupplyForecast {
   generatedAt: string;
   coverDays: number;

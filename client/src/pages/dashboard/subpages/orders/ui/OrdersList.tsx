@@ -5,13 +5,16 @@ import type { Cell, ColumnConfig } from "@shared/table/model/types";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { FaChevronLeft, FaChevronRight, FaCircleNotch } from "react-icons/fa";
+import { FaEye } from "react-icons/fa6";
 import type { OrderListItem, OrdersPage, OrderStatus } from "../model/types";
+import { OrderDetailsDialog } from "./OrderDetailsDialog";
 
 const COLUMNS: ColumnConfig[] = [
   { label: "Заказ", align: "left" },
   { label: "Статус", align: "center" },
   { label: "Позиций", align: "right" },
   { label: "Принят", align: "right" },
+  { label: "", align: "center" },
 ];
 
 const LIMIT = 20;
@@ -21,7 +24,7 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   cancelled: "Отменен",
 };
 
-const transformOrder = (order: OrderListItem): Cell[] => [
+const transformOrder = (order: OrderListItem, onOpen: (id: string) => void): Cell[] => [
   { body: order.externalOrderId ?? order.id.slice(0, 8), align: "left" },
   {
     body: STATUS_LABELS[order.status] ?? order.status,
@@ -38,11 +41,25 @@ const transformOrder = (order: OrderListItem): Cell[] => [
     }),
     align: "right",
   },
+  {
+    body: (
+      <button
+        type="button"
+        title="Состав заказа"
+        onClick={() => onOpen(order.id)}
+        className="grid size-8 place-items-center rounded-lg border border-primary transition-colors hover:bg-secondary mx-auto"
+      >
+        <FaEye size={12} />
+      </button>
+    ),
+    align: "center",
+  },
 ];
 
 export const OrdersList = () => {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<OrderStatus | "">("");
+  const [openedId, setOpenedId] = useState<string | null>(null);
 
   const [prevStatus, setPrevStatus] = useState(status);
   if (prevStatus !== status) {
@@ -59,7 +76,7 @@ export const OrdersList = () => {
     placeholderData: (prev) => prev,
   });
 
-  const rows = (data?.items ?? []).map(transformOrder);
+  const rows = (data?.items ?? []).map((order) => transformOrder(order, setOpenedId));
   const totalPages = data ? Math.max(1, Math.ceil(data.total / LIMIT)) : 1;
   const safePage = Math.min(page, totalPages);
   const showLoader = useDelayedValue(isPending && !data, { minDisplay: 300 });
@@ -128,6 +145,8 @@ export const OrdersList = () => {
           </button>
         </div>
       </div>
+
+      <OrderDetailsDialog orderId={openedId} onClose={() => setOpenedId(null)} />
     </div>
   );
 };

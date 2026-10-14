@@ -11,7 +11,7 @@ export const DashboardPage = () => {
   const { user } = useAuth();
 
   return (
-    <div className="overflow-auto flex-1 flex flex-col sm:flex-row gap-4 pb-24 sm:pb-0">
+    <div className="sm:overflow-auto flex-1 flex flex-col sm:flex-row gap-4 pb-24 sm:pb-0">
       <DashboardSidebar />
       <div className="sm:flex-2 md:flex-3 grid md:grid-rows-3 gap-4">
         <div className="row-span-2 grid md:grid-cols-4 md:grid-rows-2">

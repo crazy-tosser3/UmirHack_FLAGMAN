@@ -31,7 +31,9 @@ export const DashboardModule = ({
   return (
     <div
       className={cn(
-        "bg-bg min-h-0 h-full rounded-xl overflow-auto",
+        "bg-bg min-h-0 rounded-xl overflow-auto md:h-full",
+        rowSpan >= 2 ? "h-[75dvh] min-h-96" : "h-[60dvh] min-h-80",
+        "md:min-h-0",
         COL_SPAN[colSpan] ?? "col-span-1",
         ROW_SPAN[rowSpan] ?? "row-span-1",
         className)}

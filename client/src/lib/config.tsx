@@ -20,7 +20,6 @@ import { PageTitle } from "@shared/page-title";
 import { CalendarPage } from "@pages/calendar";
 import { FaCalendarAlt } from "react-icons/fa";
 
-// Навигация (синхронизировано с созданием страниц)
 interface Page {
   path: string;
   nested?: React.ReactNode;

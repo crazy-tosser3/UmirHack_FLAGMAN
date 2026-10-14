@@ -1,20 +1,23 @@
 import type { Unit } from "@lib/types";
 
+export type StopReasonCode = "manual" | "insufficient_stock" | "expired_ingredient";
+
 export interface Reason {
-  availableQuantity: number;
-  code: string;
-  ingredientId: string;
-  ingredientName: string;
-  requiredQuantity: number;
-  unit: Unit;
+  code: StopReasonCode | string;
+  ingredientId: string | null;
+  ingredientName: string | null;
+  requiredQuantity: number | null;
+  availableQuantity: number | null;
+  unit: Unit | null;
 }
 
 export interface StopListDish {
   dishId: string;
   dishName: string;
+  manualStop?: boolean;
   isAvailable: boolean;
   reasons: Reason[];
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface StopListData {
@@ -23,3 +26,6 @@ export interface StopListData {
   page: number;
   total: number;
 }
+
+export const isManualStop = (dish: Pick<StopListDish, "manualStop" | "reasons">) =>
+  dish.manualStop ?? dish.reasons.some((r) => r.code === "manual");
