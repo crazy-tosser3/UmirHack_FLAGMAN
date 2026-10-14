@@ -20,11 +20,11 @@ const Navigation = () => {
   const { user } = useAuth();
 
   return (
-    <div className="flex flex-col gap-2 md:absolute left-1/2 md:-translate-x-1/2"
+    <div className="hidden md:flex flex-col gap-2 absolute left-1/2 -translate-x-1/2"
     onPointerEnter={() => setIsOpen(true)}
     onPointerLeave={() => setIsOpen(false)}
     >
-      <nav className="flex flex-col md:flex-row">
+      <nav className="flex flex-row">
         {navigation.map((navs, index) => (
           <Fragment key={navs.categoryName}>
             {user && navs.role?.includes(user.role) && (

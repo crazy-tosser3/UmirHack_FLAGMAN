@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom"
 import Navigation from "./Navigation"
+import { MobileMenu } from "./MobileMenu"
 import { useAuth } from "@shared/auth/auth-service"
 import { IcoBtn } from "@shared/ico-text-btn"
 import { FaUserCircle, FaWifi } from "react-icons/fa"
@@ -24,12 +25,13 @@ export const Header = () => {
         <NavLink to={"/"} className="text-2xl font-oswald rounded-lg">Pantry</NavLink>
         <Navigation />
         {user && (
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center min-w-0">
             <FaWifi
               title={STATUS[eventsStatus].title}
               className={cn("size-6 p-1 rounded-full shrink-0 transition-colors", STATUS[eventsStatus].className)}
             />
-            <IcoBtn icon={<FaUserCircle />} onClick={() => navigate("/profile")}>{user.name}</IcoBtn>
+            <IcoBtn className="hidden md:flex" icon={<FaUserCircle />} onClick={() => navigate("/profile")}>{user.name}</IcoBtn>
+            <MobileMenu />
           </div>
           )}
       </header>
