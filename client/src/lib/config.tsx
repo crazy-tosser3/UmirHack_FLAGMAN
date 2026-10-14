@@ -17,6 +17,8 @@ import { DeliveriesPage } from "@pages/dashboard/subpages/deliveries";
 import { CreateDeliveryPage } from "@pages/dashboard/subpages/create-delivery";
 import { FaTruck, FaTruckLoading } from "react-icons/fa";
 import { PageTitle } from "@shared/page-title";
+import { CalendarPage } from "@pages/calendar";
+import { FaCalendarAlt } from "react-icons/fa";
 
 // Навигация (синхронизировано с созданием страниц)
 interface Page {
@@ -124,6 +126,10 @@ export const pages: Page[] = [
  {
   path: "/profile",
   element: <ProfilePage />
+ },
+ {
+  path: "/calendar",
+  element: <CalendarPage />
  }
 ]
 
@@ -162,6 +168,11 @@ export const navigation: Navs[] = [
           title: "Аналитика",
           ico: FaChartBar,
           path: "/dashboard/analytics"
+        },
+        {
+          title: "Календарь",
+          ico: FaCalendarAlt,
+          path: "/calendar"
         },
       ],
       secondary: [
