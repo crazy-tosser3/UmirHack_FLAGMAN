@@ -29,13 +29,22 @@ compose.desktop {
         jvmArgs += jcefJvmArgs
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Dmg, TargetFormat.Exe, TargetFormat.Deb)
             packageName = "Pantry"
             packageVersion = "1.0.0"
             includeAllModules = true
 
             macOS {
                 bundleID = "com.crzto3.pantry"
+            }
+
+            windows {
+                menuGroup = "Pantry"
+                shortcut = true
+                menu = true
+                dirChooser = true
+                perUserInstall = true
+                upgradeUuid = "8d3b2f0e-6c1a-4f7e-9b52-3a1d7c4e9f20"
             }
         }
     }

@@ -16,8 +16,25 @@ interface TelegramLogin {
 declare global {
   interface Window {
     Telegram?: { Login?: TelegramLogin };
+    __PANTRY_NATIVE__?: { telegramAuth?: string };
   }
 }
+
+const nativeAuthEndpoint = () => window.__PANTRY_NATIVE__?.telegramAuth;
+
+const isAuthData = (value: unknown): value is TelegramAuthData =>
+  typeof value === "object" && value !== null && "id" in value && "hash" in value;
+
+const authViaApp = async (endpoint: string): Promise<TelegramAuthData | false> => {
+  const params = new URLSearchParams({ bot_id: String(BOT_ID), request_access: "write" });
+  const response = await fetch(`${endpoint}?${params}`, { method: "POST" });
+  if (response.status !== 200) return false;
+  const payload: unknown = await response.json();
+  const data = typeof payload === "object" && payload !== null && "event" in payload
+    ? (payload as { result?: unknown }).result
+    : payload;
+  return isAuthData(data) ? data : false;
+};
 
 let widgetLoading: Promise<TelegramLogin> | null = null;
 
@@ -60,7 +77,7 @@ export const TelegramAuth = ({
   const allowed = Boolean(BOT_ID) && (!role || canUseTelegram(role));
 
   useEffect(() => {
-    if (allowed) loadWidget().catch(() => undefined);
+    if (allowed && !nativeAuthEndpoint()) loadWidget().catch(() => undefined);
   }, [allowed]);
 
   if (role && !canUseTelegram(role)) return null;
@@ -74,7 +91,35 @@ export const TelegramAuth = ({
     );
   }
 
+  const finishAuth = async (data: TelegramAuthData | false) => {
+    if (!data) {
+      setPending(false);
+      setStatus("Вход отменён");
+      return;
+    }
+
+    setStatus(null);
+    try {
+      await onAuth(data);
+    } finally {
+      setPending(false);
+    }
+  };
+
   const handleClick = () => {
+    const endpoint = nativeAuthEndpoint();
+    if (endpoint) {
+      setPending(true);
+      setStatus("Подтвердите вход в окне Telegram...");
+      authViaApp(endpoint)
+        .then(finishAuth)
+        .catch(() => {
+          setPending(false);
+          setStatus("Не удалось связаться с Telegram, проверьте соединение");
+        });
+      return;
+    }
+
     const login = window.Telegram?.Login;
     if (!login) {
       setStatus("Telegram ещё загружается, попробуйте через пару секунд");
@@ -85,20 +130,7 @@ export const TelegramAuth = ({
     setPending(true);
     setStatus("Подтвердите вход в окне Telegram...");
 
-    login.auth({ bot_id: BOT_ID, request_access: "write" }, async (data) => {
-      if (!data) {
-        setPending(false);
-        setStatus("Вход отменён");
-        return;
-      }
-
-      setStatus(null);
-      try {
-        await onAuth(data);
-      } finally {
-        setPending(false);
-      }
-    });
+    login.auth({ bot_id: BOT_ID, request_access: "write" }, finishAuth);
   };
 
   return (

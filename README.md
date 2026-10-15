@@ -82,12 +82,30 @@ Desktop — встроенный Chromium (JCEF). На десктопе при *
 - Поменять в приложении: если сервер недоступен, появится экран с кнопкой «Адрес сервера».
   На десктопе — меню **Pantry → Адрес сервера…** (⌘, / Ctrl+,), там же «Обновить» (⌘R / Ctrl+R).
 
+## Вход через Telegram
+
+Telegram пускает в OAuth только с домена, привязанного к боту (`/setdomain` в @BotFather), а интерфейс в
+приложении открыт с `127.0.0.1`. Поэтому в приложении вход идёт иначе, чем на сайте:
+фронт вызывает встроенный сервер (`/__pantry/telegram-auth`), приложение открывает страницу
+`oauth.telegram.org` в отдельном окне от имени домена бота и возвращает фронту результат.
+
+Что должно совпадать:
+
+| Что | Где | Сейчас |
+|---|---|---|
+| Токен бота (проверка подписи данных Telegram) | на бэкенде | |
+| ID бота = цифры до `:` в токене | `client/.env.local` → `VITE_TELEGRAM_BOT_ID` | `8782375246` (@UmirFlagman_DEMO_bot) |
+| Домен бота (`/setdomain`) | `-Ppantry.telegramDomain=…` или `gradle.properties` | `hack.crzto3.ru` |
+
+После смены `VITE_TELEGRAM_BOT_ID` приложение нужно пересобрать — значение вшивается в сборку фронта.
+
 ## Сборка и запуск
 
 Нужны Node.js (для сборки клиента), JDK 21+, Android SDK, Xcode — для iOS.
 
 - Desktop: `./gradlew :desktopApp:run`
-  - установщик: `./gradlew :desktopApp:packageDmg` (`packageMsi` на Windows, `packageDeb` на Linux)
+  - установщик: `./gradlew :desktopApp:packageDmg` на macOS, `packageExe` на Windows, `packageDeb` на Linux
+    (каждый собирается только на своей ОС; для `.exe` на Windows нужен [WiX Toolset 3](https://wixtoolset.org/))
 - Android: `./gradlew :androidApp:assembleDebug` (или `installDebug` на подключённое устройство)
 - iOS: открыть [`iosApp`](./iosApp) в Xcode и запустить
 - Тесты: `./gradlew :shared:jvmTest`
@@ -96,7 +114,5 @@ Desktop — встроенный Chromium (JCEF). На десктопе при *
 
 ## Ограничения
 
-- Вход через Telegram-виджет внутри приложения не заработает: Telegram проверяет домен
-  (`/setdomain` у бота), а интерфейс открыт с `127.0.0.1`. Вход по email/паролю работает.
 - Для бэкенда без TLS (`http://`) включены `usesCleartextTraffic` (Android) и `NSAllowsArbitraryLoads` (iOS);
   для продакшена с https их можно отключить.

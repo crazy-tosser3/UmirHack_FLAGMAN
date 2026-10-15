@@ -15,11 +15,13 @@ import org.cef.CefApp
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLifeSpanHandlerAdapter
+import org.cef.handler.CefLoadHandlerAdapter
 import org.cef.handler.CefRequestHandlerAdapter
 import org.cef.network.CefRequest
 import java.awt.Desktop
 import java.io.File
 import java.net.URI
+import javax.swing.SwingUtilities
 
 object DesktopBrowser {
     internal sealed interface State {
@@ -94,6 +96,49 @@ object DesktopBrowser {
         return client.createBrowser(url, false, false)
     }
 
+    internal fun createTelegramAuthBrowser(app: CefApp, url: String, onFinished: (String?) -> Unit): CefBrowser {
+        val client = app.createClient()
+        val handle = { target: String ->
+            when (val navigation = TelegramOAuth.classify(target)) {
+                TelegramNavigation.Allow -> false
+                TelegramNavigation.External -> {
+                    openInSystemBrowser(target)
+                    true
+                }
+                is TelegramNavigation.Finished -> {
+                    SwingUtilities.invokeLater { onFinished(navigation.payload) }
+                    true
+                }
+            }
+        }
+        client.addRequestHandler(object : CefRequestHandlerAdapter() {
+            override fun onBeforeBrowse(
+                browser: CefBrowser?,
+                frame: CefFrame?,
+                request: CefRequest,
+                userGesture: Boolean,
+                isRedirect: Boolean,
+            ): Boolean = handle(request.url)
+        })
+        client.addLifeSpanHandler(object : CefLifeSpanHandlerAdapter() {
+            override fun onBeforePopup(
+                browser: CefBrowser,
+                frame: CefFrame?,
+                targetUrl: String?,
+                targetFrameName: String?,
+            ): Boolean {
+                if (targetUrl != null && !handle(targetUrl)) browser.loadURL(targetUrl)
+                return true
+            }
+        })
+        client.addLoadHandler(object : CefLoadHandlerAdapter() {
+            override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
+                if (frame.isMain) frame.executeJavaScript(TelegramOAuth.openerShim, frame.url, 0)
+            }
+        })
+        return client.createBrowser(url, false, false)
+    }
+
     fun dispose() {
         app?.dispose()
         app = null
@@ -102,10 +147,15 @@ object DesktopBrowser {
     private fun openIfExternal(url: String): Boolean {
         val uri = runCatching { URI(url) }.getOrNull() ?: return false
         val external = uri.scheme in setOf("http", "https") && uri.host != LocalServer.HOST
-        if (external && Desktop.isDesktopSupported()) {
+        if (external) openInSystemBrowser(url)
+        return external
+    }
+
+    private fun openInSystemBrowser(url: String) {
+        val uri = runCatching { URI(url) }.getOrNull() ?: return
+        if (Desktop.isDesktopSupported()) {
             runCatching { Desktop.getDesktop().browse(uri) }
         }
-        return external
     }
 
     private fun appDataDir(): File {

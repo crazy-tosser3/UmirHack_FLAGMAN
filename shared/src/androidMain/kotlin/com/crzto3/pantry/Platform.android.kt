@@ -19,6 +19,7 @@ import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -26,10 +27,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -173,4 +177,55 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
     else -> null
+}
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+internal actual fun TelegramAuthHost(request: TelegramAuthRequest, onResult: (String?) -> Unit) {
+    val currentOnResult by rememberUpdatedState(onResult)
+    var finished by remember { mutableStateOf(false) }
+    val finish = { payload: String? ->
+        if (!finished) {
+            finished = true
+            currentOnResult(payload)
+        }
+    }
+
+    Dialog(
+        onDismissRequest = { finish(null) },
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+    ) {
+        TelegramAuthFrame(onCancel = { finish(null) }) {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { context ->
+                    WebView(context).apply {
+                        layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        webViewClient = object : WebViewClient() {
+                            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean =
+                                when (val navigation = TelegramOAuth.classify(request.url.toString())) {
+                                    TelegramNavigation.Allow -> false
+                                    TelegramNavigation.External -> {
+                                        openExternally(context, request.url.toString())
+                                        true
+                                    }
+                                    is TelegramNavigation.Finished -> {
+                                        finish(navigation.payload)
+                                        true
+                                    }
+                                }
+
+                            override fun onPageFinished(view: WebView, url: String?) {
+                                view.evaluateJavascript(TelegramOAuth.openerShim, null)
+                            }
+                        }
+                        loadUrl(request.url)
+                    }
+                },
+                onRelease = { it.destroy() },
+            )
+        }
+    }
 }

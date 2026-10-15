@@ -23,3 +23,6 @@ internal class NetworkAccess(val ready: Boolean, val missing: Boolean, val reque
 
 @Composable
 internal expect fun rememberNetworkAccess(backendUrl: String): NetworkAccess
+
+@Composable
+internal expect fun TelegramAuthHost(request: TelegramAuthRequest, onResult: (String?) -> Unit)

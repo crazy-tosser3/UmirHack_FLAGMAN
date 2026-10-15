@@ -49,13 +49,16 @@ val buildWebClient by tasks.registering(Exec::class) {
 }
 
 val backendUrl = providers.gradleProperty("pantry.backendUrl").orElse("")
+val telegramDomain = providers.gradleProperty("pantry.telegramDomain").orElse("hack.crzto3.ru")
 val buildConfigDir = layout.buildDirectory.dir("generated/pantryConfig/kotlin")
 
 val generateBuildConfig by tasks.registering {
     group = "pantry"
     val url = backendUrl
+    val domain = telegramDomain
     val outDir = buildConfigDir
     inputs.property("backendUrl", url)
+    inputs.property("telegramDomain", domain)
     outputs.dir(outDir)
     doLast {
         val file = outDir.get().file("com/crzto3/pantry/BuildConfig.kt").asFile
@@ -66,6 +69,7 @@ val generateBuildConfig by tasks.registering {
             |
             |internal object BuildConfig {
             |    const val BACKEND_URL: String = "${url.get().replace("\"", "\\\"")}"
+            |    const val TELEGRAM_DOMAIN: String = "${domain.get().replace("\"", "\\\"")}"
             |}
             |""".trimMargin()
         )
