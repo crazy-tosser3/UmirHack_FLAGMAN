@@ -31,6 +31,8 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -90,6 +92,13 @@ fun App(controller: AppController = rememberAppController()) {
                     onSettings = controller::openSettings,
                 )
                 Screen.Settings -> SettingsScreen(controller)
+            }
+
+            val telegramRequest by controller.telegram.request.collectAsState()
+            telegramRequest?.let { request ->
+                key(request) {
+                    TelegramAuthHost(request) { payload -> controller.telegram.finish(request, payload) }
+                }
             }
         }
     }

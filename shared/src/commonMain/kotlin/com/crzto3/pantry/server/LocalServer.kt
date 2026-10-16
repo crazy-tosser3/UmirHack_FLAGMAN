@@ -1,5 +1,6 @@
 package com.crzto3.pantry.server
 
+import com.crzto3.pantry.TelegramBridge
 import com.crzto3.pantry.resources.Res
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
@@ -32,6 +33,7 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.utils.io.ByteReadChannel
@@ -41,7 +43,7 @@ import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
-class LocalServer(val backendUrl: String) {
+class LocalServer(val backendUrl: String, private val telegram: TelegramBridge) {
     private val client = HttpClient {
         expectSuccess = false
         followRedirects = false
@@ -110,6 +112,7 @@ class LocalServer(val backendUrl: String) {
         val instance = embeddedServer(CIO, port = port, host = HOST) {
             routing {
                 get(HEALTH_PATH) { call.respondText("ok") }
+                post(TELEGRAM_AUTH_PATH) { telegramAuth(call) }
                 route("/api/{...}") { handle { proxy(call) } }
                 get("/{path...}") { serveStatic(call) }
             }
@@ -166,7 +169,28 @@ class LocalServer(val backendUrl: String) {
             return
         }
         call.response.header(HttpHeaders.CacheControl, "no-cache")
-        call.respondBytes(index, ContentType.Text.Html)
+        call.respondBytes(injectNativeFlag(index), ContentType.Text.Html)
+    }
+
+    private fun injectNativeFlag(index: ByteArray): ByteArray =
+        index.decodeToString()
+            .replaceFirst("</head>", "<script>window.__PANTRY_NATIVE__={telegramAuth:\"$TELEGRAM_AUTH_PATH\"}</script></head>")
+            .encodeToByteArray()
+
+    private suspend fun telegramAuth(call: ApplicationCall) {
+        val botId = call.request.queryParameters["bot_id"]?.takeIf { id -> id.isNotEmpty() && id.all { it.isDigit() } }
+        if (botId == null) {
+            call.respond(HttpStatusCode.BadRequest)
+            return
+        }
+        val requestAccess = call.request.queryParameters["request_access"]?.takeIf { it.isNotBlank() }
+        val payload = telegram.authorize(botId, requestAccess)
+        call.response.header(HttpHeaders.CacheControl, "no-store")
+        if (payload == null) {
+            call.respond(HttpStatusCode.NoContent)
+        } else {
+            call.respondText(payload, ContentType.Application.Json)
+        }
     }
 
     private suspend fun proxy(call: ApplicationCall) {
@@ -246,6 +270,7 @@ class LocalServer(val backendUrl: String) {
         const val HOST = "127.0.0.1"
         const val PREFERRED_PORT = 41_731
         private const val HEALTH_PATH = "/__pantry/health"
+        private const val TELEGRAM_AUTH_PATH = "/__pantry/telegram-auth"
         private const val WEB_ROOT = "files/web"
 
         private val HOP_BY_HOP = setOf(

@@ -33,6 +33,8 @@ class AppController internal constructor(private val settings: SettingsStore) {
 
     private var server: LocalServer? = null
 
+    val telegram = TelegramBridge()
+
     fun reload() {
         if (screen is Screen.Web) reloadKey++ else retry()
     }
@@ -58,7 +60,7 @@ class AppController internal constructor(private val settings: SettingsStore) {
 
         val current = server?.takeIf { it.backendUrl == backendUrl } ?: run {
             server?.stop()
-            LocalServer(backendUrl).also { server = it }
+            LocalServer(backendUrl, telegram).also { server = it }
         }
 
         val localUrl = try {
